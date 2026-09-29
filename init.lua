@@ -27,6 +27,7 @@ function obj:init()
     self._userHotkeys = {}
     self.catalog = catalog
     self.geometry = geometry
+    self._focus = loadPart("lib/features/focus")(self)
     return self
 end
 
@@ -97,6 +98,12 @@ function obj:stop()
     self._userHotkeys = deleteAll(self._userHotkeys)
     return self
 end
+
+--- PowerWindows:focusSet(name) -> boolean
+--- Method
+--- Applies `config.focusSets[name]`; false if absent, error if `video` is not "main"/"left"/"corner".
+function obj:focusSet(name) return self._focus.apply(name) end
+function obj:hasFocusSet(name) return self._focus.has(name) end
 
 loadPart("lib/window/timers")(obj)
 loadPart("lib/window/place")(obj, geometry, query.front, query.screenFrame)
