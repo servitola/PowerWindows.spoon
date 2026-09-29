@@ -76,20 +76,22 @@ end
 
 local function release(self)
     self._hotkeys = deleteAll(self._hotkeys)
+    self:_stopGlobe()
 end
 
 --- PowerWindows:start() -> self
 --- Method
---- Binds the default chords; again = rebind.
+--- Binds the default chords, takes macOS's Globe window keys; again = rebind.
 function obj:start()
     release(self)
     if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
+    self:_startGlobe()
     return self
 end
 
 --- PowerWindows:stop() -> self
 --- Method
---- Deletes all chords.
+--- Deletes all chords, gives the Globe keys back.
 function obj:stop()
     release(self)
     self._userHotkeys = deleteAll(self._userHotkeys)
@@ -102,5 +104,6 @@ loadPart("lib/window/stack")(obj, geometry)
 loadPart("lib/window/actions")(obj, geometry, query.front, query.screenFrame)
 loadPart("lib/window/minimize")(obj)
 loadPart("lib/features/hotkeys")(obj, settings.ACTIONS)
+loadPart("lib/features/globe")(obj, settings)
 
 return obj
