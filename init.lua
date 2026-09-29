@@ -77,22 +77,25 @@ end
 
 local function release(self)
     self._hotkeys = deleteAll(self._hotkeys)
+    if self._launch then self._launch.stop() self._launch = nil end
     self:_stopGlobe()
 end
 
 --- PowerWindows:start() -> self
 --- Method
---- Binds the default chords, takes macOS's Globe window keys; again = rebind.
+--- Binds the default chords, takes macOS's Globe window keys, starts place-on-launch; again = rebind.
 function obj:start()
     release(self)
     if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
     self:_startGlobe()
+    local launch = self.config.experimental.placeOnLaunch
+    if launch then self._launch = loadPart("lib/features/launch")(self, launch) end
     return self
 end
 
 --- PowerWindows:stop() -> self
 --- Method
---- Deletes all chords, gives the Globe keys back.
+--- Deletes all chords, gives the Globe keys back, stops place-on-launch.
 function obj:stop()
     release(self)
     self._userHotkeys = deleteAll(self._userHotkeys)
