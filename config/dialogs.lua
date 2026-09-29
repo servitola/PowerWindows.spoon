@@ -1,0 +1,21 @@
+-- { bundle or "*", title = pattern, notTitle = pattern, maxSize = { w, h } (strictly less), maxTitle = chars }
+-- Any match = small dialog: top right corner. Beats overrides and catalog slots, not `false`.
+return {
+    { "com.apple.finder", title = "^Copy", maxSize = { 600, 250 } },
+    { "com.apple.finder", title = "^Move", maxSize = { 600, 250 } },
+    { "*", title = "^Save",   maxSize = { 800, 600 } },
+    { "*", title = "^Open",   maxSize = { 800, 600 } },
+    { "*", title = "^Export", maxSize = { 800, 600 } },
+    { "*", title = "^Import", maxSize = { 800, 600 } },
+    { "*", title = "^Print",  maxSize = { 800, 600 } },
+    { "*", title = "^Alert",  maxSize = { 500, 300 } },
+    { "*", title = "Dialog",  maxSize = { 500, 300 } },
+    { "*", title = "Warning", maxSize = { 500, 300 } },
+    { "com.apple.Safari", title = "^Downloads$" },
+    { "com.apple.Terminal", notTitle = "^Terminal$", maxSize = { 500, 300 } },
+    { "com.apple.finder",            maxSize = { 500, 300 }, maxTitle = 29 },
+    { "com.apple.systempreferences", maxSize = { 500, 300 }, maxTitle = 29 },
+    { "com.apple.DiskUtility",       maxSize = { 500, 300 }, maxTitle = 29 },
+    { "com.apple.Preview",           maxSize = { 500, 300 }, maxTitle = 29 },
+    { "com.apple.TextEdit",          maxSize = { 500, 300 }, maxTitle = 29 },
+}

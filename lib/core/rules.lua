@@ -1,0 +1,72 @@
+local M = {}
+
+M.SLOTS = { main = true, side = true, corner = true, stack = true, dialog = true }
+
+function M.normalize(value, source)
+    if value == false then return false end
+    if type(value) == "string" then
+        assert(M.SLOTS[value], "PowerWindows: unknown slot " .. value)
+        return { slot = value, source = source }
+    end
+    local r = {}
+    for k, v in pairs(value) do r[k] = v end
+    assert(M.SLOTS[r.slot], "PowerWindows: unknown slot " .. tostring(r.slot))
+    r.source = source
+    return r
+end
+
+local function matches(entry, info)
+    if entry[1] ~= "*" and entry[1] ~= info.bundle then return false end
+    if entry.title and not info.title:find(entry.title) then return false end
+    if entry.notTitle and info.title:find(entry.notTitle) then return false end
+    if entry.maxTitle and #info.title > entry.maxTitle then return false end
+    if entry.maxSize and not (info.w < entry.maxSize[1] and info.h < entry.maxSize[2]) then return false end
+    return true
+end
+
+function M.lookup(entries, info)
+    for _, entry in ipairs(entries) do
+        if matches(entry, info) then
+            if entry[2] == false then return false end
+            return { slot = entry[2], keepAspect = entry.keepAspect, device = entry.device,
+                     popup = entry.popup, source = "catalog" }
+        end
+    end
+    return nil
+end
+
+M.dialogs = nil
+
+function M.isSmallDialog(info)
+    for _, entry in ipairs(M.dialogs) do
+        if matches(entry, info) then return true end
+    end
+    return false
+end
+
+function M.resolve(config, entries, info, win)
+    if config.rule then
+        local value = config.rule(win, info)
+        if value ~= nil then return M.normalize(value, "rule") end
+    end
+    local override = config.overrides and config.overrides[info.bundle]
+    if override == false then return false end
+    local found
+    if config.catalog ~= false then found = M.lookup(entries, info) end
+    -- `false` beats the dialog detector; an override slot beats the catalog's false.
+    if override == nil and found == false then return false end
+    if config.dialogs ~= false and M.isSmallDialog(info) then
+        return { slot = "dialog", source = "dialog" }
+    end
+    if override ~= nil then
+        if type(override) == "string" and found and found.slot == override then
+            found.source = "override"
+            return found
+        end
+        return M.normalize(override, "override")
+    end
+    if found ~= nil then return found end
+    return { slot = "main", source = "default" }
+end
+
+return M
