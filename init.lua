@@ -23,6 +23,8 @@ local query = loadPart("lib/window/query")(obj)
 function obj:init()
     self.config = settings.defaults(DEFAULTS)
     self._skip = {}
+    self._hotkeys = {}
+    self._userHotkeys = {}
     self.catalog = catalog
     self.geometry = geometry
     return self
@@ -67,10 +69,38 @@ function obj:slotRect(name, screen)
     return geometry.rect(self.config, name, (screen or hs.screen.mainScreen()):frame())
 end
 
+local function deleteAll(hotkeys)
+    for _, hotkey in ipairs(hotkeys) do hotkey:delete() end
+    return {}
+end
+
+local function release(self)
+    self._hotkeys = deleteAll(self._hotkeys)
+end
+
+--- PowerWindows:start() -> self
+--- Method
+--- Binds the default chords; again = rebind.
+function obj:start()
+    release(self)
+    if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
+    return self
+end
+
+--- PowerWindows:stop() -> self
+--- Method
+--- Deletes all chords.
+function obj:stop()
+    release(self)
+    self._userHotkeys = deleteAll(self._userHotkeys)
+    return self
+end
+
 loadPart("lib/window/timers")(obj)
 loadPart("lib/window/place")(obj, geometry, query.front, query.screenFrame)
 loadPart("lib/window/stack")(obj, geometry)
 loadPart("lib/window/actions")(obj, geometry, query.front, query.screenFrame)
 loadPart("lib/window/minimize")(obj)
+loadPart("lib/features/hotkeys")(obj, settings.ACTIONS)
 
 return obj
