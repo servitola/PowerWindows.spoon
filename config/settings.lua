@@ -30,9 +30,7 @@ return {
         letters = { left = "a", right = "d", fullscreen = "w", arrangeAll = "s" },
         shiftedLetters = { halfLeft = "a", halfRight = "d", top60 = "w", bottom40 = "s" },
     },
-    macosKeys = {         -- 🌐⌃key runs the action; false = macOS keeps them (docs/macos-keys.md)
-        left = "left", right = "right", up = "top60", down = "bottom40", f = "fullscreen", c = "center",
-    },
+    macosKeys = false,    -- { key = action }: 🌐⌃key runs the action (docs/macos-keys.md)
 
     catalog = true,       -- false = ignore config/catalog.lua
     dialogs = true,       -- false = ignore config/dialogs.lua
