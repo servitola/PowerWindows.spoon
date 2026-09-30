@@ -123,4 +123,12 @@ function geometry.near(first, second, tolerance)
         and math.abs(first.w - second.w) <= tolerance and math.abs(first.h - second.h) <= tolerance
 end
 
+local KEPT_SLOTS = { "main", "side", "corner", "full", "halfLeft", "halfRight", "top60", "bottom40" }
+
+function geometry.slotAt(config, screenFrame, frame, tolerance)
+    for _, slot in ipairs(KEPT_SLOTS) do
+        if geometry.near(frame, geometry.rect(config, slot, screenFrame), tolerance) then return slot end
+    end
+end
+
 return geometry

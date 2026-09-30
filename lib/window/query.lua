@@ -25,8 +25,8 @@ return function(powerWindows, settings)
         return settings.forScreen(self.config, { name = screen:name(), w = full.w, h = full.h }), screen:frame()
     end
 
-    function powerWindows:_screenLayoutOf(window)
-        local screen = window:screen()
+    function powerWindows:_screenLayoutOf(window, screen)
+        screen = screen or window:screen()
         if screen then return self:_screenLayout(screen) end
     end
 

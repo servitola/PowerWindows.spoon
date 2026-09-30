@@ -35,6 +35,16 @@ function rules.lookup(entries, info)
     return nil
 end
 
+-- keepAspect and device windows have only these areas (ASPECT_AREA in place.lua, geometry.devicePlace).
+local FITTED = { main = true, side = true, corner = true, full = true }
+
+-- The slot a window takes to another screen: where it sits now, else where it belongs.
+function rules.carrySlot(detected, resolved)
+    if resolved.slot == "dialog" or resolved.slot == "stack" then return resolved.slot end
+    if (resolved.keepAspect or resolved.device) and not FITTED[detected] then return resolved.slot end
+    return detected or resolved.slot
+end
+
 function rules.isSmallDialog(dialogs, info)
     for _, entry in ipairs(dialogs) do
         if matches(entry, info) then return true end

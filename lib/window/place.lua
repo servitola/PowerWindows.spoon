@@ -25,8 +25,8 @@ return function(powerWindows, geometry, query)
         self:_set(window, geometry.devicePlace(config, screenFrame, current.h / current.w, slot))
     end
 
-    function powerWindows:_place(window, resolved, slot)
-        local config, screenFrame = self:_screenLayoutOf(window)
+    function powerWindows:_place(window, resolved, slot, screen)
+        local config, screenFrame = self:_screenLayoutOf(window, screen)
         if not screenFrame then return end
         slot = slot or resolved.slot
         if slot == "dialog" then

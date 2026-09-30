@@ -29,6 +29,7 @@ loadPart("lib/window/actions")(powerWindows, geometry, query)
 loadPart("lib/window/minimize")(powerWindows, query)
 loadPart("lib/features/hotkeys")(powerWindows, settings.ACTIONS)
 loadPart("lib/features/globe")(powerWindows, settings)
+loadPart("lib/features/screens")(powerWindows, geometry, rules, query)
 
 -- An unknown slot would otherwise surface only when a window of that app is placed.
 local function checkOverrides(overrides)
