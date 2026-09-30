@@ -42,15 +42,18 @@ return function(powerWindows)
         hold(timer, key)
     end
 
-    -- callback returns true to stop repeating.
+    -- callback returns true to stop repeating. An error stops it too: Hammerspoon stops a raising
+    -- doEvery on its own, and the key must not keep holding the dead timer.
     function powerWindows:_every(interval, callback, key)
         if key then self:_cancel(key) end
         local timer
         timer = hs.timer.doEvery(interval, function()
-            if callback() then
+            local finished, result = pcall(callback)
+            if not finished or result then
                 timer:stop()
                 drop(timer, key)
             end
+            if not finished then error(result, 0) end
         end)
         hold(timer, key)
     end

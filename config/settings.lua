@@ -5,7 +5,7 @@ return {
     split = 0.73,         -- right column start, share of width
     sideHeight = 0.70,    -- upper right slot, share of height
     topShare = 0.60,      -- top60/bottom40 line, share of height
-    animation = 0.044,    -- seconds; 0 = instant
+    animation = 0.05,     -- seconds; 0 = one clean move, no motion
     tolerance = 4,        -- points; this close to a slot = already in it (second press cycles)
     screens = {},         -- { [screen name], portrait, ultrawide = { gap, split, sideHeight, topShare, device, dialog } }
 
