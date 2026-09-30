@@ -1,7 +1,7 @@
 -- Every setting and its default; fractions are shares of the screen.
 -- configure{} merges maps one level deep (keys.arrows is replaced whole) and replaces lists.
 return {
-    gap = 0.005,          -- share of screen; right edge ÷1.5, bottom ×1.5
+    gap = 0.005,          -- below 1 = share of screen, 1 and up = points; right edge ÷1.5, bottom ×1.5
     split = 0.73,         -- right column start, share of width
     sideHeight = 0.70,    -- upper right slot, share of height
     topShare = 0.60,      -- top60/bottom40 line, share of height

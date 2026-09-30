@@ -3,29 +3,35 @@ local geometry = {}
 -- Right and bottom margins differ from the gap: tuned by eye.
 local RIGHT_GAP_DIVISOR, BOTTOM_GAP_FACTOR = 1.5, 1.5
 
-local function edgesFor(config)
-    local gap = config.gap
+-- Gap in points becomes a share per axis, so every formula below stays in fractions.
+function geometry.gaps(config, screenFrame)
+    if config.gap < 1 then return config.gap, config.gap end
+    return config.gap / screenFrame.w, config.gap / screenFrame.h
+end
+
+local function edgesFor(config, screenFrame)
+    local gapX, gapY = geometry.gaps(config, screenFrame)
     return {
-        gap = gap, between = gap * 2,
-        left = gap, top = gap,
-        right = 1 - gap / RIGHT_GAP_DIVISOR, bottom = 1 - gap * BOTTOM_GAP_FACTOR,
+        gapX = gapX, gapY = gapY, betweenX = gapX * 2, betweenY = gapY * 2,
+        left = gapX, top = gapY,
+        right = 1 - gapX / RIGHT_GAP_DIVISOR, bottom = 1 - gapY * BOTTOM_GAP_FACTOR,
     }
 end
 
-local function areaFraction(config, area)
-    local edges = edgesFor(config)
+local function areaFraction(config, area, screenFrame)
+    local edges = edgesFor(config, screenFrame)
     local split, side, top = config.split, config.sideHeight, config.topShare
     local left, upper, right, bottom = edges.left, edges.top, edges.right, edges.bottom
-    local gap, between = edges.gap, edges.between
+    local gapY, betweenX, betweenY = edges.gapY, edges.betweenX, edges.betweenY
     local rects = {
-        main      = { left, upper, split - between, bottom - upper },
-        side      = { split, upper, right - split, side - gap },
-        corner    = { split, side + between, right - split, 1 - side - between },
-        video     = { split, side + between, right - split, 1 - side - between * 2 },
+        main      = { left, upper, split - betweenX, bottom - upper },
+        side      = { split, upper, right - split, side - gapY },
+        corner    = { split, side + betweenY, right - split, 1 - side - betweenY },
+        video     = { split, side + betweenY, right - split, 1 - side - betweenY * 2 },
         full      = { left, upper, right - left, bottom - upper },
-        halfLeft  = { left, upper, 0.5 - between, bottom - upper },
+        halfLeft  = { left, upper, 0.5 - betweenX, bottom - upper },
         halfRight = { 0.5, upper, right - 0.5, bottom - upper },
-        top60     = { left, upper, right - left, top - between },
+        top60     = { left, upper, right - left, top - betweenY },
         bottom40  = { left, top, right - left, bottom - top },
         column    = { split, upper, right - split, bottom - upper }, -- stack windows share it
     }
@@ -34,7 +40,7 @@ local function areaFraction(config, area)
 end
 
 function geometry.rect(config, area, screenFrame)
-    local fraction = areaFraction(config, area)
+    local fraction = areaFraction(config, area, screenFrame)
     return {
         x = screenFrame.x + screenFrame.w * fraction.x, y = screenFrame.y + screenFrame.h * fraction.y,
         w = screenFrame.w * fraction.w, h = screenFrame.h * fraction.h,
@@ -72,24 +78,26 @@ end
 
 function geometry.devicePlace(config, screenFrame, aspect, slot)
     local width, height = geometry.deviceSize(config, screenFrame, aspect)
+    local gapX, gapY = geometry.gaps(config, screenFrame)
     local raise = screenFrame.h * config.device.raise
     local left, top
     if slot == "full" then
         left = screenFrame.x + (screenFrame.w - width) / 2
         top = screenFrame.y + (screenFrame.h - height) / 2 - raise
     elseif slot == "main" then
-        left = screenFrame.x + screenFrame.w * config.gap
+        left = screenFrame.x + screenFrame.w * gapX
         top = screenFrame.y + (screenFrame.h - height) / 2 - raise
     else
         left = screenFrame.x + screenFrame.w * config.split
-        top = screenFrame.y + screenFrame.h * config.gap
+        top = screenFrame.y + screenFrame.h * gapY
     end
     return { x = left, y = top, w = width, h = height }
 end
 
 function geometry.stackCells(config, screenFrame, count)
     local column = geometry.rect(config, "column", screenFrame)
-    local between = screenFrame.h * config.gap * 2
+    local _, gapY = geometry.gaps(config, screenFrame)
+    local between = screenFrame.h * gapY * 2
     local height = (column.h - between * (count - 1)) / count
     local cells = {}
     for index = 1, count do
@@ -100,11 +108,11 @@ function geometry.stackCells(config, screenFrame, count)
 end
 
 function geometry.smallDialog(config, screenFrame, current)
-    local edges = edgesFor(config)
+    local edges = edgesFor(config, screenFrame)
     local width = math.min(current.w, screenFrame.w * (edges.right - config.split) * config.dialog.width)
     local height = math.min(current.h, screenFrame.h * config.sideHeight * config.dialog.height)
     return {
-        x = screenFrame.x + screenFrame.w * (1 - edges.gap) - width,
+        x = screenFrame.x + screenFrame.w * (1 - edges.gapX) - width,
         y = screenFrame.y + edges.top * screenFrame.h,
         w = width, h = height,
     }
