@@ -110,6 +110,8 @@ return function(powerWindows, geometry, query)
             self:_set(window, geometry.smallDialog(config, screenFrame, window:frame()))
         elseif resolved.device then
             self:_placeDevice(window, config, screenFrame, slot)
+        elseif slot == "stack" and resolved.keepAspect then
+            self:_fit(window, geometry.rect(config, "side", screenFrame), "topLeft")
         elseif slot == "stack" then
             self:_set(window, geometry.rect(config, "side", screenFrame))
         elseif resolved.keepAspect then
@@ -130,7 +132,7 @@ return function(powerWindows, geometry, query)
 
     --- PowerWindows:placeDefault([window])
     --- Method
-    --- Puts `window` (default: frontmost) in its slot; a stack window re-lays the column.
+    --- Puts `window` (default: focused) in its slot; a stack window re-lays the column.
     powerWindows.placeDefault = withWindow(function(self, window)
         local resolved = self:resolve(window)
         if not resolved then return end
@@ -140,14 +142,14 @@ return function(powerWindows, geometry, query)
 
     --- PowerWindows:moveLeft([window])
     --- Method
-    --- Puts `window` (default: frontmost) into the big left slot.
+    --- Puts `window` (default: focused) into the big left slot.
     powerWindows.moveLeft = withWindow(function(self, window)
         self:_place(window, self:_resolveOr(window, "main"), "main")
     end)
 
     --- PowerWindows:moveRight([window])
     --- Method
-    --- Puts `window` (default: frontmost) into the right column; corner and dialog keep their slot, a stack window re-lays the column.
+    --- Puts `window` (default: focused) into the right column; corner and dialog keep their slot, a stack window re-lays the column.
     powerWindows.moveRight = withWindow(function(self, window)
         local resolved = self:_resolveOr(window, "side")
         if resolved.slot == "stack" then return restackColumnOf(self, window) end
@@ -157,7 +159,7 @@ return function(powerWindows, geometry, query)
 
     --- PowerWindows:moveFull([window])
     --- Method
-    --- Stretches `window` (default: frontmost) over the screen with gaps; not native fullscreen.
+    --- Stretches `window` (default: focused) over the screen with gaps; not native fullscreen.
     powerWindows.moveFull = withWindow(function(self, window)
         self:_place(window, self:_resolveOr(window, "main"), "full")
     end)
@@ -165,6 +167,6 @@ return function(powerWindows, geometry, query)
     function powerWindows:_isAt(window, area)
         local config, screenFrame = self:_screenLayoutOf(window)
         return screenFrame ~= nil
-            and geometry.near(window:frame(), geometry.rect(config, area, screenFrame), self.config.tolerance)
+            and geometry.isAt(window:frame(), geometry.rect(config, area, screenFrame), self.config.tolerance)
     end
 end

@@ -72,9 +72,9 @@ return function(powerWindows, geometry, query)
 
     --- PowerWindows:arrangeAll()
     --- Method
-    --- Puts every window in its slot; a frontmost window in native fullscreen only leaves it.
+    --- Puts every window in its slot; a focused window in native fullscreen only leaves it.
     function powerWindows:arrangeAll()
-        local window = query.front()
+        local window = query.focused()
         if window and window:isFullScreen() then
             window:setFullScreen(false)
             return
@@ -82,23 +82,24 @@ return function(powerWindows, geometry, query)
         self:arrangeAllNow()
     end
 
-    local function isBackgroundStretched(self, window, resolved, frontWindow)
-        return resolved.slot == "main" and window ~= frontWindow and self:_isAt(window, "full")
+    local function isBackgroundStretched(self, window, resolved, focusedWindow)
+        return resolved.slot == "main" and window ~= focusedWindow and self:_isAt(window, "full")
     end
 
     --- PowerWindows:arrangeAllNow()
     --- Method
-    --- Same, without the fullscreen check; skips background windows stretched full.
+    --- Same, without the fullscreen check; skips minimized windows, hidden apps and background windows stretched full.
     function powerWindows:arrangeAllNow()
-        local frontWindow = query.front()
+        local focusedWindow = query.focused()
         local stackScreens = {}
+        -- Not isStandard: some players (Telegram's) are non-standard windows with a slot.
         for _, window in ipairs(hs.window.allWindows()) do
-            if not self:_skipped(window) then
+            if window:isVisible() and not self:_skipped(window) then
                 local resolved = self:resolve(window)
                 if resolved and resolved.slot == "stack" then
                     local screen = window:screen()
                     if screen then stackScreens[screen:id()] = screen end
-                elseif resolved and not isBackgroundStretched(self, window, resolved, frontWindow) then
+                elseif resolved and not isBackgroundStretched(self, window, resolved, focusedWindow) then
                     self:_place(window, resolved)
                 end
             end

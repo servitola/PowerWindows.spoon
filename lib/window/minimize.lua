@@ -71,9 +71,7 @@ return function(powerWindows, query)
     --- PowerWindows:minimizeAndFocusNext([window])
     --- Method
     --- Minimizes `window` (default: focused) and focuses the next: same app before other apps, same screen first within each.
-    function powerWindows:minimizeAndFocusNext(window)
-        window = window or query.focused()
-        if not window then return end
+    powerWindows.minimizeAndFocusNext = query.withWindow(function(self, window)
         -- Fullscreen owns its Space and cannot minimize.
         if window:isFullScreen() then
             return self:_leaveFullscreenThen(window, AFTER_FULLSCREEN, function() self:minimizeAndFocusNext(window) end)
@@ -82,5 +80,5 @@ return function(powerWindows, query)
         -- Minimize first: minimizing a background window silently fails.
         minimizeWithRetry(self, window)
         if nextWindow then handFocusTo(self, nextWindow, window) end
-    end
+    end)
 end

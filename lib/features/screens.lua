@@ -25,7 +25,7 @@ return function(powerWindows, geometry, rules, query)
 
     --- PowerWindows:moveToScreen(target[, window])
     --- Method
-    --- Moves `window` (default: frontmost) to `"next"`, `"prev"` or an `hs.screen`, keeping its slot.
+    --- Moves `window` (default: focused) to `"next"`, `"prev"` or an `hs.screen`, keeping its slot.
     function powerWindows:moveToScreen(target, window)
         assert(target == "next" or target == "prev" or type(target) == "userdata" or type(target) == "table",
             "PowerWindows: moveToScreen target must be \"next\", \"prev\" or an hs.screen")

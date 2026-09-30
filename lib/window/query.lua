@@ -1,14 +1,13 @@
 return function(powerWindows, settings)
     local query = {}
 
-    function query.front() return hs.window.frontmostWindow() end
     -- Not frontmostWindow: that is the always-on-top PiP player, not the window being worked in.
     function query.focused() return hs.window.focusedWindow() end
 
-    -- A method whose window defaults to the frontmost one; with no window it returns whenNone.
+    -- A method whose window defaults to the focused one; with no window it returns whenNone.
     function query.withWindow(body, whenNone)
         return function(self, window, ...)
-            window = window or query.front()
+            window = window or query.focused()
             if not window then return whenNone end
             return body(self, window, ...)
         end

@@ -83,7 +83,7 @@ end
 
 --- PowerWindows:resolve([window]) -> table or false
 --- Method
---- `{ slot, source, keepAspect, device, popup }` for `window` (default: frontmost), or false.
+--- `{ slot, source, keepAspect, device, popup }` for `window` (default: focused), or false.
 powerWindows.resolve = query.withWindow(function(self, window)
     if not window:application() then return false end
     return rules.resolve(self.config, catalog.apps, dialogs, query.info(window), window)
@@ -105,6 +105,7 @@ function powerWindows:start()
     settings.validate(self.config, settings.ACTIONS, hs.keycodes.map)
     release(self)
     if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
+    for _, hotkey in ipairs(self._userHotkeys) do hotkey:enable() end
     self:_startGlobe()
     self:_startScreenWatcher()
     local launch = self.config.experimental.placeOnLaunch
@@ -114,11 +115,11 @@ end
 
 --- PowerWindows:stop() -> self
 --- Method
---- Deletes all chords, gives the Globe keys back, stops the screen watcher and place-on-launch.
+--- Deletes the default chords, disables `bindHotkeys` ones until `start()`, gives the Globe keys back,
+--- stops the screen watcher and place-on-launch.
 function powerWindows:stop()
     release(self)
-    for _, hotkey in ipairs(self._userHotkeys) do hotkey:delete() end
-    self._userHotkeys = {}
+    for _, hotkey in ipairs(self._userHotkeys) do hotkey:disable() end
     return self
 end
 

@@ -123,11 +123,21 @@ function geometry.near(first, second, tolerance)
         and math.abs(first.w - second.w) <= tolerance and math.abs(first.h - second.h) <= tolerance
 end
 
+-- Terminal and iTerm snap their size to whole text cells, so a placed one can fall short of its
+-- slot by up to a cell; the origin still has to match.
+local CELL_SLACK = 24
+
+function geometry.isAt(frame, rect, tolerance)
+    local sizeTolerance = tolerance + CELL_SLACK
+    return math.abs(frame.x - rect.x) <= tolerance and math.abs(frame.y - rect.y) <= tolerance
+        and math.abs(frame.w - rect.w) <= sizeTolerance and math.abs(frame.h - rect.h) <= sizeTolerance
+end
+
 local KEPT_SLOTS = { "main", "side", "corner", "full", "halfLeft", "halfRight", "top60", "bottom40" }
 
 function geometry.slotAt(config, screenFrame, frame, tolerance)
     for _, slot in ipairs(KEPT_SLOTS) do
-        if geometry.near(frame, geometry.rect(config, slot, screenFrame), tolerance) then return slot end
+        if geometry.isAt(frame, geometry.rect(config, slot, screenFrame), tolerance) then return slot end
     end
 end
 

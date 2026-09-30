@@ -32,7 +32,7 @@ return function(powerWindows, actions)
 
     --- PowerWindows:bindHotkeys(mapping) -> self
     --- Method
-    --- Binds `{ action = {mods, key} }` or a list of chords per action; survives `start()`.
+    --- Binds `{ action = {mods, key} }` or a list of chords per action; `stop()` pauses them, `start()` resumes.
     function powerWindows:bindHotkeys(mapping)
         self:_bind(mapping, self._userHotkeys)
         return self
