@@ -58,13 +58,17 @@ function settings.validate(config, actions, keycodes)
     end
 end
 
+local PROFILE_KEYS = { gap = true, split = true, sideHeight = true, topShare = true, device = true, dialog = true }
+-- Width over height: 21:9 is 2.33, 16:9 is 1.78.
+local ULTRAWIDE = 2.1
+
 local function unknown(path)
     return "unknown setting '" .. path .. "' (see config/settings.lua)"
 end
 
--- Closed maps take only the keys of their defaults; open ones are keyed by bundle or name.
+-- Closed maps take only the keys of their defaults; open ones are keyed by bundle, screen or name.
 local CLOSED_MAPS = { device = true, dialog = true, keys = true }
-local OPEN_MAPS = { overrides = true, focusSets = true, experimental = true }
+local OPEN_MAPS = { overrides = true, screens = true, focusSets = true, experimental = true }
 
 local function checkValue(current, value, path, name)
     if current == nil then return unknown(path) end
@@ -82,11 +86,32 @@ local function checkValue(current, value, path, name)
     end
 end
 
+local function checkProfiles(current, screens)
+    for name, profile in pairs(screens) do
+        local prefix = "screens." .. tostring(name)
+        if type(profile) ~= "table" then return prefix .. " must be a table" end
+        for key, value in pairs(profile) do
+            local path = prefix .. "." .. tostring(key)
+            if not PROFILE_KEYS[key] then return unknown(path) end
+            local problem = checkValue(current[key], value, path, key)
+            if problem then return problem end
+        end
+    end
+end
+
 local function check(current, changes)
     for key, value in pairs(changes) do
         local problem = checkValue(current[key], value, tostring(key), key)
+            or (key == "screens" and checkProfiles(current, value))
         if problem then return problem end
     end
+end
+
+local function overlay(base, top)
+    local result = {}
+    for key, value in pairs(base) do result[key] = value end
+    for key, value in pairs(top) do result[key] = value end
+    return result
 end
 
 -- Checks everything before changing anything; level 3 points the error at the configure call.
@@ -101,6 +126,20 @@ function settings.merge(current, changes)
         end
     end
     return current
+end
+
+-- screen = { name, w, h }. Name beats shape; one profile, merged over the base one level deep.
+function settings.forScreen(config, screen)
+    local screens = config.screens
+    local profile = screens[screen.name]
+        or (screen.h > screen.w and screens.portrait)
+        or (screen.w / screen.h >= ULTRAWIDE and screens.ultrawide)
+    if not profile then return config end
+    local result = overlay(config, {})
+    for key, value in pairs(profile) do
+        result[key] = (isMap(config[key]) and isMap(value)) and overlay(config[key], value) or value
+    end
+    return result
 end
 
 return settings

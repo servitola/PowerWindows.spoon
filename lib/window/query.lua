@@ -1,4 +1,4 @@
-return function(powerWindows)
+return function(powerWindows, settings)
     local query = {}
 
     function query.front() return hs.window.frontmostWindow() end
@@ -19,9 +19,10 @@ return function(powerWindows)
         return own ~= nil and own:id() == screen:id()
     end
 
-    -- Layout on the usable frame (no menu bar, no Dock).
+    -- Profile chosen by the full frame (screen shape), layout on the usable frame (no menu bar, no Dock).
     function powerWindows:_screenLayout(screen)
-        return self.config, screen:frame()
+        local full = screen:fullFrame()
+        return settings.forScreen(self.config, { name = screen:name(), w = full.w, h = full.h }), screen:frame()
     end
 
     function powerWindows:_screenLayoutOf(window)

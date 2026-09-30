@@ -21,7 +21,7 @@ local DEFAULTS = loadPart("config/settings")
 local createFocusSets = loadPart("lib/features/focus")
 local startPlaceOnLaunch = loadPart("lib/features/launch")
 
-local query = loadPart("lib/window/query")(powerWindows)
+local query = loadPart("lib/window/query")(powerWindows, settings)
 loadPart("lib/window/timers")(powerWindows)
 loadPart("lib/window/place")(powerWindows, geometry, query)
 loadPart("lib/window/stack")(powerWindows, geometry, query)

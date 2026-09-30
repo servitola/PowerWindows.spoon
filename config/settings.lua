@@ -7,6 +7,7 @@ return {
     topShare = 0.60,      -- top60/bottom40 line, share of height
     animation = 0.044,    -- seconds; 0 = instant
     tolerance = 4,        -- points; this close to a slot = already in it (second press cycles)
+    screens = {},         -- { [screen name], portrait, ultrawide = { gap, split, sideHeight, topShare, device, dialog } }
 
     device = {            -- windows with device = true (iOS Simulator)
         width = 0.4,      -- share of screen; wider than the column on purpose
