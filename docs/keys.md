@@ -8,32 +8,31 @@ Bound by `start()`.
 
 | Chord | Action | Press again |
 |---|---|---|
-| `⌃⌥←` `⌃⌥A` | `left` — to `main` | left half |
-| `⌃⌥→` `⌃⌥D` | `right` — to `side` | right half |
-| `⌃⌥↑` `⌃⌥W` | `fullscreen` — whole screen, with gaps | native fullscreen |
-| `⌃⌥↓` `⌃⌥S` | `arrangeAll` — every window to its place | — |
+| `⌃⌥←` `⌃⌥A` | `left`: to `main` | left half |
+| `⌃⌥→` `⌃⌥D` | `right`: to `side` | right half |
+| `⌃⌥↑` `⌃⌥W` | `fullscreen`: whole screen, with gaps | native fullscreen |
+| `⌃⌥↓` `⌃⌥S` | `arrangeAll`: every window to its place | — |
 | `⇧⌃⌥←` `⇧⌃⌥A` | `halfLeft` | — |
 | `⇧⌃⌥→` `⇧⌃⌥D` | `halfRight` | — |
-| `⇧⌃⌥↑` `⇧⌃⌥W` | `top60` — upper part, full width | — |
-| `⇧⌃⌥↓` `⇧⌃⌥S` | `bottom40` — lower part, full width | — |
-| `🌐⌃←` `🌐⌃→` `🌐⌃↑` `🌐⌃↓` `🌐⌃F` `🌐⌃C` | macOS's own window keys, taken over | see [macos-keys.md](macos-keys.md) |
+| `⇧⌃⌥↑` `⇧⌃⌥W` | `top60` | — |
+| `⇧⌃⌥↓` `⇧⌃⌥S` | `bottom40` | — |
 
-"Press again" works when the window is already in place, within `tolerance` pixels ([layout.md](layout.md)).
+"Press again" = the window already sits in that slot, within `tolerance`. A third press returns.
 
 ## Actions without a chord
 
 | Action | Does |
 |---|---|
 | `center` | centers the window, size kept |
-| `swapSides` | swaps the two top windows: left goes right, right goes left |
+| `swapSides` | swaps the two top windows, left and right |
 | `minimizeAndFocusNext` | minimizes, focuses the next window: same app first |
 | `minimizeCurrent` | minimizes the focused window |
 
-These twelve names are all `bindHotkeys` accepts. Another name raises an error.
+These twelve actions are all `bindHotkeys` and `macosKeys` accept.
 
 ## Add a chord
 
-`bindHotkeys` takes `{ action = { mods, key } }`, or a list of chords per action. User chords survive `start()`; `stop()` deletes them.
+`{ action = { mods, key } }`, or a list of chords per action. `stop()` pauses it, `start()` resumes.
 
 ```lua
 spoon.PowerWindows:bindHotkeys{
@@ -43,65 +42,46 @@ spoon.PowerWindows:bindHotkeys{
 }
 ```
 
-Anything else in the API — `focusSet`, `placeDefault`, `moveLeft` — bind with `hs.hotkey`:
+## Other methods
+
+`moveToScreen`, `focusSet`, `placeDefault`, `moveLeft`: bind with `hs.hotkey`.
 
 ```lua
-hs.hotkey.bind({ "shift", "ctrl", "alt", "cmd" }, "up", function() spoon.PowerWindows:focusSet("work") end)
+local powerWindows = spoon.PowerWindows
+hs.hotkey.bind({ "ctrl", "alt", "cmd" }, "right", function() powerWindows:moveToScreen("next") end)
+hs.hotkey.bind({ "ctrl", "alt", "cmd" }, "left", function() powerWindows:moveToScreen("prev") end)
+hs.hotkey.bind({ "shift", "ctrl", "alt", "cmd" }, "up", function() powerWindows:focusSet("work") end)
 ```
 
 ## Change the default chords
 
-`keys` in [`config/settings.lua`](../config/settings.lua). One table replaces one table: give it whole.
+`keys` in [`config/settings.lua`](../config/settings.lua). Each field you give replaces that field whole; a misspelled field or action raises at `configure`.
 
 ```lua
 spoon.PowerWindows:configure{
   keys = {
     mods = { "cmd", "alt" },
     shiftMods = { "shift", "cmd", "alt" },
+    letters = { left = "h", right = "l", fullscreen = "k", arrangeAll = "j" },
   },
 }:start()
 ```
 
-```lua
-spoon.PowerWindows:configure{
-  keys = { letters = { left = "h", right = "l", fullscreen = "k", arrangeAll = "j" } },
-}:start()
-```
-
-`configure` after `start()` needs another `start()`.
-
-## Arrows only
-
-```lua
-spoon.PowerWindows:configure{ wasd = false }:start()
-```
-
-## No chords
-
-For those who bind everything themselves: another hotkey Spoon, a launcher, a script.
+Arrows only: `wasd = false`. No chords at all: `hotkeys = false`. Key settings apply on the next `start()`.
 
 ```lua
 spoon.PowerWindows:configure{ hotkeys = false }:start()
 hs.hotkey.bind({ "cmd", "alt" }, "left", function() spoon.PowerWindows:left() end)
 ```
 
-Every action is a method. Call it from anywhere.
-
 ## macOS's own window keys
 
-`🌐⌃` + arrows, `F` and `C` run PowerWindows actions. Give them back to macOS:
-
-```lua
-spoon.PowerWindows:configure{ macosKeys = false }:start()
-```
-
-Details: [macos-keys.md](macos-keys.md).
+`🌐⌃` + arrows, `F`, `C` stay macOS's until `macosKeys` names them: [macos-keys.md](macos-keys.md).
 
 ## Swap sides on A and D together
 
-`hs.hotkey` fires on the first key and cannot see two keys at once. Karabiner-Elements can. It turns `⌃⌥A`+`D` and `⌃⌥←`+`→`, pressed within 50 ms, into keypad 8.
-
-Karabiner rule (Settings › Complex Modifications › Add your own rule):
+`hs.hotkey` cannot see two keys at once; Karabiner-Elements can. This rule turns `⌃⌥A`+`D` and `⌃⌥←`+`→` within 50 ms into keypad 8.
+Karabiner › Complex Modifications › Add your own rule:
 
 ```json
 {
@@ -129,10 +109,8 @@ Karabiner rule (Settings › Complex Modifications › Add your own rule):
 }
 ```
 
-Hammerspoon:
-
 ```lua
 spoon.PowerWindows:bindHotkeys{ swapSides = { {}, "pad8" } }
 ```
 
-Cost: a single `⌃⌥A` or `⌃⌥←` waits up to 50 ms for its partner.
+Cost: a lone `⌃⌥A` or `⌃⌥←` waits up to 50 ms for its partner.

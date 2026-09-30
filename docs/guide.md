@@ -1,10 +1,30 @@
 # How to live with it
 
-For a new user: what a working day with PowerWindows looks like, and the few keys that carry it.
+You never move windows. Every window knows its place. Four keys, when you really need them: `⌃⌥←` `⌃⌥→` `⌃⌥↑` `⌃⌥↓`. The rest is optional.
+
+## The loop
+
+| Chord | First press | Second press |
+|---|---|---|
+| `⌃⌥←` | left column | left half |
+| `⌃⌥→` | right column | right half |
+| `⌃⌥↑` | whole screen, with gaps | native fullscreen |
+| `⌃⌥↓` | every window to its place | — |
+
+Two apps side by side: `⌃⌥←` on one, `⌃⌥→` on the other, until each takes its half. Back: `⌃⌥↓`.
+
+A player or a dialog keeps its place on `⌃⌥→`. From native fullscreen, `⌃⌥←` and `⌃⌥→` leave it first.
+
+Same on `W A S D`; halves and 60/40 on `⇧`: [keys.md](keys.md).
+
+## Morning
+
+Open what you need. Press `⌃⌥↓`: the editor left, the chat right, the player in the corner.
+
+A focused window in native fullscreen only leaves it on the first `⌃⌥↓`. Press again.
+A background window stretched to the whole screen stays stretched. Minimized windows and hidden apps stay where they are.
 
 ## The shape
-
-One screen, four places.
 
 ```
 +------------------------------+----------+
@@ -17,61 +37,48 @@ One screen, four places.
 +------------------------------+----------+
 ```
 
-- `main` — the big left area. Every app goes here unless told otherwise.
-- `side` — a narrow strip on the right. Messengers.
-- `corner` — under the strip. Video players and picture-in-picture.
-- `stack` — the whole right column, split evenly. iOS Simulator and Android Emulator windows.
+- `main`: every app, unless told otherwise.
+- `side`: messengers.
+- `corner`: players and picture-in-picture.
+- `stack`: simulators. Two or more share the right column evenly.
 
 Which app goes where: [apps.md](apps.md). Proportions: [layout.md](layout.md).
 
-## Morning
+## Optional
 
-Open what you need. Do not arrange anything by hand.
+Nothing below is needed.
 
-Press `⌃⌥↓`. Every window goes to its place: the editor left, Telegram right, the player in the corner.
+### Minimize and go on
 
-If the front window is in native fullscreen, the first `⌃⌥↓` only takes it out. Press again.
-
-## The working loop
-
-Four chords. Each one does something else on the second press.
-
-| Chord | First press | Second press |
-|---|---|---|
-| `⌃⌥←` | to `main` | left half |
-| `⌃⌥→` | to `side` | right half |
-| `⌃⌥↑` | whole screen, with gaps | native fullscreen |
-| `⌃⌥↓` | every window to its place | — |
-
-Two apps side by side for a while: `⌃⌥←` twice on one, `⌃⌥→` twice on the other. Back to normal: `⌃⌥↓`.
-
-A player or a dialog stays in its own place on `⌃⌥→`: the corner stays the corner.
-
-From native fullscreen, `⌃⌥←` and `⌃⌥→` leave fullscreen first, then move.
-
-The same four on `W A S D`, and halves and 60/40 on `⇧`: [keys.md](keys.md).
-
-## Minimize and go on
-
-macOS minimizes a window and leaves focus nowhere. `minimizeAndFocusNext` minimizes it and focuses the next one: another window of the same app first, then the window behind it. Video in the corner is skipped.
-
-It has no chord by default. The author puts it on `⌘H`:
+macOS minimizes and leaves focus nowhere. `minimizeAndFocusNext` focuses the next window: same app first. Corner video is skipped. On `⌘H` (replaces Hide):
 
 ```lua
 spoon.PowerWindows:bindHotkeys{ minimizeAndFocusNext = { { "cmd" }, "h" } }
 ```
 
-`⌘H` then no longer hides the app.
+### Swap sides
 
-## Swap sides
+`swapSides`: the two top windows trade sides. Both at once: [keys.md](keys.md#swap-sides-on-a-and-d-together).
 
-`swapSides` swaps the two top windows of the screen: the left one goes right, the right one goes left.
+### Second monitor
 
-No chord by default. The author presses `⌃⌥A` and `⌃⌥D` together; Karabiner turns that into keypad 8. Recipe: [keys.md](keys.md#swap-sides-on-a-and-d-together).
+Laptop plus a big screen. A window keeps its slot on either; the big one gets gaps in points.
 
-## Contexts: focus sets
+```lua
+local powerWindows = spoon.PowerWindows
+powerWindows:configure{
+  screens = { ["DELL U2723QE"] = { gap = 8, split = 0.68 } },
+  rearrangeOnScreenChange = true,
+}:start()
+hs.hotkey.bind({ "ctrl", "alt", "cmd" }, "right", function() powerWindows:moveToScreen("next") end)
+hs.hotkey.bind({ "ctrl", "alt", "cmd" }, "left", function() powerWindows:moveToScreen("prev") end)
+```
 
-A focus set is a desktop for one kind of work. Kept apps come back and take their places. Everything else hides. A playing picture-in-picture video stays.
+Screen names: `for _, screen in ipairs(hs.screen.allScreens()) do print(screen:name()) end` in the console. Profiles by shape: [layout.md](layout.md#screens).
+
+### Focus sets
+
+A desktop for one kind of work: kept apps come back to their places, the rest hide. An open picture-in-picture window stays.
 
 ```lua
 spoon.PowerWindows:configure{
@@ -95,30 +102,20 @@ spoon.PowerWindows:configure{
 
 | Field | Meaning |
 |---|---|
-| `keep` | bundle IDs: unhidden, unminimized, put in place |
+| `keep` | bundle IDs: unhidden, unminimized, placed |
 | `focus` | bundle IDs: the first running one gets focus |
-| `video` | where a kept video popup goes: `"main"` (default) or `"corner"` |
-| `custom` | `{ [bundle] = function(app, pw) }` — your own handling for one app |
+| `video` | where a kept video popup goes: `"main"` (default; `"left"` is the same) or `"corner"` |
+| `custom` | `{ [bundle] = function(app, powerWindows) }`: your own handling |
 
-With `video = "main"`, the video takes the big area: a film evening. With `"corner"`, it stays small under the chat.
+Firefox and Zen: a front tab whose title contains a `videoTitleMarkers` word is popped into picture-in-picture first, so it survives.
 
-Firefox and Zen: if the front tab looks like a video (title contains a word from `videoTitleMarkers`), the set pops it into picture-in-picture first, so it survives the hiding.
-
-Focus sets have no chords. Bind them yourself. The author uses `⇧⌃⌥⌘` + arrows:
+No chords by default. Example, `⇧⌃⌥⌘` + arrows:
 
 ```lua
-local pw = spoon.PowerWindows
-local sets = { up = "work", left = "personal", right = "comms", down = "only-work" }
-for key, name in pairs(sets) do
-  hs.hotkey.bind({ "shift", "ctrl", "alt", "cmd" }, key, function() pw:focusSet(name) end)
+local powerWindows = spoon.PowerWindows
+for key, name in pairs({ up = "work", left = "personal", right = "comms" }) do
+  hs.hotkey.bind({ "shift", "ctrl", "alt", "cmd" }, key, function() powerWindows:focusSet(name) end)
 end
 ```
 
-`only-work` is one more set: the terminal and the messenger, nothing else. A missing set name returns `false` and does nothing.
-
-## Everything here can be changed
-
-- Chords, rebinding, macOS's own window keys: [keys.md](keys.md)
-- Which app goes where, never-touch, rules: [apps.md](apps.md)
-- Proportions, gaps, animation: [layout.md](layout.md)
-- 🌐⌃F, 🌐⌃C and the arrows: [macos-keys.md](macos-keys.md)
+An unknown set name returns `false` and does nothing. Scripts call `focusSet()` directly: a synthesized chord does not reach a Hammerspoon hotkey.
