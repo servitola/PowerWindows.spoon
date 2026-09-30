@@ -39,6 +39,7 @@ return {
     overrides = {},       -- { [bundle] = main/side/corner/stack/dialog, false or a table }
     rule = false,         -- function(window, info) -> slot, table, false, or nil to fall through
     focusSets = {},       -- { name = { keep, focus, video, custom } }
+    rearrangeOnScreenChange = false, -- true = arrangeAllNow() ~1 s after displays change
     videoTitleMarkers = { "youtube", "youtu.be", "twitch", "vimeo", "rutube", "netflix" }, -- lowercase; a front tab titled with one is popped out to PiP by focus sets
 
     experimental = {},    -- { placeOnLaunch = { bundles, finderFirstWindow } }

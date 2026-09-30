@@ -41,6 +41,7 @@ local function release(self)
     self._hotkeys = {}
     if self._launch then self._launch.stop() self._launch = nil end
     self:_stopGlobe()
+    self:_stopScreenWatcher()
 end
 
 function powerWindows:init()
@@ -99,12 +100,13 @@ end
 
 --- PowerWindows:start() -> self
 --- Method
---- Binds the default chords; starts Globe keys and place-on-launch when enabled. Calling again rebinds.
+--- Binds the default chords; starts Globe keys, screen watcher and place-on-launch when enabled. Calling again rebinds.
 function powerWindows:start()
     settings.validate(self.config, settings.ACTIONS, hs.keycodes.map)
     release(self)
     if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
     self:_startGlobe()
+    self:_startScreenWatcher()
     local launch = self.config.experimental.placeOnLaunch
     if launch then self._launch = startPlaceOnLaunch(self, geometry, launch) end
     return self
@@ -112,7 +114,7 @@ end
 
 --- PowerWindows:stop() -> self
 --- Method
---- Deletes all chords, gives the Globe keys back, stops place-on-launch.
+--- Deletes all chords, gives the Globe keys back, stops the screen watcher and place-on-launch.
 function powerWindows:stop()
     release(self)
     for _, hotkey in ipairs(self._userHotkeys) do hotkey:delete() end
