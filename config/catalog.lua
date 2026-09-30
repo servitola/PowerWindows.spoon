@@ -49,6 +49,7 @@ catalog.apps = {
     { "com.runningwithcrayons.Alfred",     false },
     -- Notch overlay: moving it leaves a black bar on screen.
     { "theboringteam.boringnotch",         false },
+    { "com.servitola.polaska",             false }, -- tab strip pinned under the browser window
 }
 
 -- Gecko browser.xhtml key_togglePictureInPicture; Chromium has no default PiP chord.
