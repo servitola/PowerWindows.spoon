@@ -1,8 +1,8 @@
 -- kVK_Function: Globe is down while its latest flagsChanged carries fn.
 local GLOBE = 63
 
-return function(obj, settings)
-    function obj:_startGlobe()
+return function(powerWindows, settings)
+    function powerWindows:_startGlobe()
         local byCode, needsGlobe = settings.macosKeys(self.config.macosKeys, settings.ACTIONS, hs.keycodes.map)
         if not byCode then return end
         local run = {}
@@ -30,7 +30,7 @@ return function(obj, settings)
         end):start()
     end
 
-    function obj:_stopGlobe()
+    function powerWindows:_stopGlobe()
         if self._globeTap then
             self._globeTap:stop()
             self._globeTap = nil

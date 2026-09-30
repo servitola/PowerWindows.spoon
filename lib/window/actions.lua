@@ -1,83 +1,105 @@
-local FULLSCREEN_POLL, FULLSCREEN_TIMEOUT = 0.1, 3
+-- Placing needs only the frame back; minimize (minimize.lua) waits longer.
 local AFTER_FULLSCREEN = 0.2
 
-return function(obj, geometry, front, screenFrame)
-    local function leaveFullscreenThen(pw, win, place)
-        win:setFullScreen(false)
-        pw:_waitUntil(
-            function() return not win:isFullScreen() end,
-            function() pw:_after(AFTER_FULLSCREEN, function() place(win) end) end,
-            FULLSCREEN_POLL, FULLSCREEN_TIMEOUT)
+return function(powerWindows, geometry, query)
+    local withWindow = query.withWindow
+
+    local function toggleSide(homeSlot, halfAction, moveAction)
+        return withWindow(function(self, window)
+            if window:isFullScreen() then
+                return self:_leaveFullscreenThen(window, AFTER_FULLSCREEN, function() self[moveAction](self, window) end)
+            end
+            if self:_isAt(window, homeSlot) then self[halfAction](self, window) else self[moveAction](self, window) end
+        end)
     end
 
-    function obj:left(win)
-        win = win or front()
-        if not win then return end
-        if win:isFullScreen() then return leaveFullscreenThen(self, win, function(w) self:moveLeft(w) end) end
-        if self:_isAt(win, "main") then self:halfLeft(win) else self:moveLeft(win) end
+    --- PowerWindows:left([window])
+    --- Method
+    --- Left column; again (already there) = left half. Leaves native fullscreen first.
+    powerWindows.left = toggleSide("main", "halfLeft", "moveLeft")
+
+    --- PowerWindows:right([window])
+    --- Method
+    --- Right column; again = right half. Leaves native fullscreen first.
+    powerWindows.right = toggleSide("side", "halfRight", "moveRight")
+
+    --- PowerWindows:fullscreen([window])
+    --- Method
+    --- Whole screen with gaps; again = native fullscreen.
+    powerWindows.fullscreen = withWindow(function(self, window)
+        if window:isFullScreen() then return end
+        if self:_isAt(window, "full") then window:setFullScreen(true) else self:moveFull(window) end
+    end)
+
+    local function simpleMove(area)
+        return withWindow(function(self, window)
+            local config, screenFrame = self:_screenLayoutOf(window)
+            if screenFrame then self:_set(window, geometry.rect(config, area, screenFrame)) end
+        end)
     end
 
-    function obj:right(win)
-        win = win or front()
-        if not win then return end
-        if win:isFullScreen() then return leaveFullscreenThen(self, win, function(w) self:moveRight(w) end) end
-        if self:_isAt(win, "side") then self:halfRight(win) else self:moveRight(win) end
-    end
+    --- PowerWindows:halfLeft([window])
+    --- Method
+    --- Left half of the screen.
+    powerWindows.halfLeft = simpleMove("halfLeft")
 
-    function obj:fullscreen(win)
-        win = win or front()
-        if not win or win:isFullScreen() then return end
-        if self:_isAt(win, "full") then win:setFullScreen(true) else self:moveFull(win) end
-    end
+    --- PowerWindows:halfRight([window])
+    --- Method
+    --- Right half of the screen.
+    powerWindows.halfRight = simpleMove("halfRight")
 
-    local function simpleMove(name)
-        return function(self, win)
-            win = win or front()
-            local sf = win and screenFrame(win)
-            if sf then self:_set(win, geometry.rect(self.config, name, sf)) end
-        end
-    end
-    obj.halfLeft = simpleMove("halfLeft")
-    obj.halfRight = simpleMove("halfRight")
-    obj.top60 = simpleMove("top60")
-    obj.bottom40 = simpleMove("bottom40")
+    --- PowerWindows:top60([window])
+    --- Method
+    --- Top part, `topShare` of the height.
+    powerWindows.top60 = simpleMove("top60")
 
-    function obj:center(win)
-        win = win or front()
-        local sf = win and screenFrame(win)
-        if not sf then return end
-        local f = win:frame()
-        f.x = sf.x + (sf.w - f.w) / 2
-        f.y = sf.y + (sf.h - f.h) / 2
-        win:setFrame(f, 0)
-    end
+    --- PowerWindows:bottom40([window])
+    --- Method
+    --- Bottom part, below `topShare`.
+    powerWindows.bottom40 = simpleMove("bottom40")
+
+    --- PowerWindows:center([window])
+    --- Method
+    --- Centers the window, size kept.
+    powerWindows.center = withWindow(function(self, window)
+        local _, screenFrame = self:_screenLayoutOf(window)
+        if not screenFrame then return end
+        local frame = window:frame()
+        frame.x = screenFrame.x + (screenFrame.w - frame.w) / 2
+        frame.y = screenFrame.y + (screenFrame.h - frame.h) / 2
+        self:_write(window, frame)
+    end)
 
     --- PowerWindows:arrangeAll()
     --- Method
-    --- Puts every window in its slot; a native fullscreen front window only leaves fullscreen.
-    function obj:arrangeAll()
-        local win = front()
-        if win and win:isFullScreen() then
-            win:setFullScreen(false)
+    --- Puts every window in its slot; a frontmost window in native fullscreen only leaves it.
+    function powerWindows:arrangeAll()
+        local window = query.front()
+        if window and window:isFullScreen() then
+            window:setFullScreen(false)
             return
         end
         self:arrangeAllNow()
     end
 
+    local function isBackgroundStretched(self, window, resolved, frontWindow)
+        return resolved.slot == "main" and window ~= frontWindow and self:_isAt(window, "full")
+    end
+
     --- PowerWindows:arrangeAllNow()
     --- Method
     --- Same, without the fullscreen check; skips background windows stretched full.
-    function obj:arrangeAllNow()
-        local frontmost = front()
+    function powerWindows:arrangeAllNow()
+        local frontWindow = query.front()
         local stackScreens = {}
-        for _, win in ipairs(hs.window.allWindows()) do
-            if not self:_skipped(win) then
-                local r = self:resolve(win)
-                if r and r.slot == "stack" then
-                    local screen = win:screen()
+        for _, window in ipairs(hs.window.allWindows()) do
+            if not self:_skipped(window) then
+                local resolved = self:resolve(window)
+                if resolved and resolved.slot == "stack" then
+                    local screen = window:screen()
                     if screen then stackScreens[screen:id()] = screen end
-                elseif r and not (r.slot == "main" and win ~= frontmost and self:_isAt(win, "full")) then
-                    self:_place(win, r)
+                elseif resolved and not isBackgroundStretched(self, window, resolved, frontWindow) then
+                    self:_place(window, resolved)
                 end
             end
         end
@@ -87,24 +109,24 @@ return function(obj, geometry, front, screenFrame)
     --- PowerWindows:swapSides()
     --- Method
     --- Swaps the two topmost windows of the focused screen, left and right.
-    function obj:swapSides()
-        local focused = hs.window.focusedWindow()
-        local screen = focused and focused:screen() or hs.screen.mainScreen()
+    function powerWindows:swapSides()
+        local focusedWindow = query.focused()
+        local screen = focusedWindow and focusedWindow:screen() or hs.screen.mainScreen()
         if not screen then return end
         local top = {}
-        for _, win in ipairs(hs.window.orderedWindows()) do
-            if win:isStandard() and win:isVisible() and not self:isDecoration(win)
-                and win:screen() and win:screen():id() == screen:id() then
-                top[#top + 1] = win
+        for _, window in ipairs(hs.window.orderedWindows()) do
+            if self:_isCandidate(window) and query.isOnScreen(window, screen) then
+                top[#top + 1] = window
                 if #top == 2 then break end
             end
         end
         if #top < 2 then return end
-        local function centerX(win) local f = win:frame() return f.x + f.w / 2 end
-        -- Sides by position, not stacking order.
-        local leftWin, rightWin = top[1], top[2]
-        if centerX(leftWin) > centerX(rightWin) then leftWin, rightWin = rightWin, leftWin end
-        self:moveRight(leftWin)
-        self:moveLeft(rightWin)
+        local function centerX(window) local frame = window:frame() return frame.x + frame.w / 2 end
+        local leftWindow, rightWindow = top[1], top[2]
+        if centerX(leftWindow) > centerX(rightWindow) then
+            leftWindow, rightWindow = rightWindow, leftWindow
+        end
+        self:moveRight(leftWindow)
+        self:moveLeft(rightWindow)
     end
 end

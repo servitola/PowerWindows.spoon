@@ -1,27 +1,30 @@
-return function(obj, geometry)
-    function obj:_stackWindows(screen)
+return function(powerWindows, geometry, query)
+    function powerWindows:_stackWindows(screen)
         local list = {}
-        for _, win in ipairs(hs.window.visibleWindows()) do
-            local s = win:screen()
-            if s and s:id() == screen:id() and win:isStandard() and not self:_skipped(win) then
-                local r = self:resolve(win)
-                if r and r.slot == "stack" then list[#list + 1] = { win = win, r = r } end
+        for _, window in ipairs(hs.window.visibleWindows()) do
+            if query.isOnScreen(window, screen) and window:isStandard() and not self:_skipped(window) then
+                local resolved = self:resolve(window)
+                if resolved and resolved.slot == "stack" then
+                    list[#list + 1] = { window = window, resolved = resolved }
+                end
             end
         end
-        table.sort(list, function(a, b) return a.win:id() < b.win:id() end)
+        -- By id: every re-lay keeps the same order.
+        table.sort(list, function(first, second) return first.window:id() < second.window:id() end)
         return list
     end
 
-    function obj:_placeStack(screen)
+    function powerWindows:_placeStack(screen)
         local list = self:_stackWindows(screen)
         if #list == 0 then return end
-        if #list == 1 then return self:_place(list[1].win, list[1].r, "stack") end
-        local cells = geometry.stackCells(self.config, screen:frame(), #list)
-        for i, item in ipairs(list) do
-            if item.r.keepAspect then
-                self:_fit(item.win, cells[i], "topLeft")
+        if #list == 1 then return self:_place(list[1].window, list[1].resolved, "stack") end
+        local config, screenFrame = self:_screenLayout(screen)
+        local cells = geometry.stackCells(config, screenFrame, #list)
+        for index, item in ipairs(list) do
+            if item.resolved.keepAspect then
+                self:_fit(item.window, cells[index], "topLeft")
             else
-                self:_set(item.win, cells[i])
+                self:_set(item.window, cells[index])
             end
         end
     end

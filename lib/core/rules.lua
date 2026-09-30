@@ -1,18 +1,18 @@
-local M = {}
+local rules = {}
 
-M.SLOTS = { main = true, side = true, corner = true, stack = true, dialog = true }
+rules.SLOTS = { main = true, side = true, corner = true, stack = true, dialog = true }
 
-function M.normalize(value, source)
+function rules.normalize(value, source)
     if value == false then return false end
     if type(value) == "string" then
-        assert(M.SLOTS[value], "PowerWindows: unknown slot " .. value)
+        assert(rules.SLOTS[value], "PowerWindows: unknown slot " .. value)
         return { slot = value, source = source }
     end
-    local r = {}
-    for k, v in pairs(value) do r[k] = v end
-    assert(M.SLOTS[r.slot], "PowerWindows: unknown slot " .. tostring(r.slot))
-    r.source = source
-    return r
+    local resolved = {}
+    for key, field in pairs(value) do resolved[key] = field end
+    assert(rules.SLOTS[resolved.slot], "PowerWindows: unknown slot " .. tostring(resolved.slot))
+    resolved.source = source
+    return resolved
 end
 
 local function matches(entry, info)
@@ -24,7 +24,7 @@ local function matches(entry, info)
     return true
 end
 
-function M.lookup(entries, info)
+function rules.lookup(entries, info)
     for _, entry in ipairs(entries) do
         if matches(entry, info) then
             if entry[2] == false then return false end
@@ -35,27 +35,25 @@ function M.lookup(entries, info)
     return nil
 end
 
-M.dialogs = nil
-
-function M.isSmallDialog(info)
-    for _, entry in ipairs(M.dialogs) do
+function rules.isSmallDialog(dialogs, info)
+    for _, entry in ipairs(dialogs) do
         if matches(entry, info) then return true end
     end
     return false
 end
 
-function M.resolve(config, entries, info, win)
+function rules.resolve(config, entries, dialogs, info, window)
     if config.rule then
-        local value = config.rule(win, info)
-        if value ~= nil then return M.normalize(value, "rule") end
+        local value = config.rule(window, info)
+        if value ~= nil then return rules.normalize(value, "rule") end
     end
     local override = config.overrides and config.overrides[info.bundle]
     if override == false then return false end
     local found
-    if config.catalog ~= false then found = M.lookup(entries, info) end
+    if config.catalog ~= false then found = rules.lookup(entries, info) end
     -- `false` beats the dialog detector; an override slot beats the catalog's false.
     if override == nil and found == false then return false end
-    if config.dialogs ~= false and M.isSmallDialog(info) then
+    if config.dialogs ~= false and rules.isSmallDialog(dialogs, info) then
         return { slot = "dialog", source = "dialog" }
     end
     if override ~= nil then
@@ -63,10 +61,10 @@ function M.resolve(config, entries, info, win)
             found.source = "override"
             return found
         end
-        return M.normalize(override, "override")
+        return rules.normalize(override, "override")
     end
     if found ~= nil then return found end
     return { slot = "main", source = "default" }
 end
 
-return M
+return rules

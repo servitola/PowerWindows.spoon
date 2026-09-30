@@ -1,6 +1,8 @@
--- Hammerspoon GCs unreferenced timers mid-chain: hold each until it ends.
+-- Hammerspoon garbage-collects unreferenced timers mid-chain: hold each until it ends.
 -- A new timer under the same key cancels the old one.
-return function(obj)
+local FULLSCREEN_POLL, FULLSCREEN_TIMEOUT = 0.1, 3
+
+return function(powerWindows)
     local pending = {}
     local keyed = {}
 
@@ -16,7 +18,7 @@ return function(obj)
         end
     end
 
-    function obj:_cancel(key)
+    function powerWindows:_cancel(key)
         local timer = keyed[key]
         if timer then
             timer:stop()
@@ -24,28 +26,28 @@ return function(obj)
         end
     end
 
-    function obj:_cancelPrefix(prefix)
+    function powerWindows:_cancelPrefix(prefix)
         for key in pairs(keyed) do
             if key:sub(1, #prefix) == prefix then self:_cancel(key) end
         end
     end
 
-    function obj:_after(delay, fn, key)
+    function powerWindows:_after(delay, callback, key)
         if key then self:_cancel(key) end
         local timer
         timer = hs.timer.doAfter(delay, function()
             drop(timer, key)
-            fn()
+            callback()
         end)
         hold(timer, key)
     end
 
-    -- fn returns true to stop repeating.
-    function obj:_every(interval, fn, key)
+    -- callback returns true to stop repeating.
+    function powerWindows:_every(interval, callback, key)
         if key then self:_cancel(key) end
         local timer
         timer = hs.timer.doEvery(interval, function()
-            if fn() then
+            if callback() then
                 timer:stop()
                 drop(timer, key)
             end
@@ -53,15 +55,24 @@ return function(obj)
         hold(timer, key)
     end
 
-    function obj:_waitUntil(predicate, action, interval, timeout)
+    function powerWindows:_waitUntil(predicate, action, interval, timeout)
         local waiter = hs.timer.waitUntil(predicate, function(timer)
-            pending[timer] = nil
+            drop(timer)
             action()
         end, interval)
-        pending[waiter] = true
+        hold(waiter)
         self:_after(timeout, function()
             waiter:stop()
-            pending[waiter] = nil
+            drop(waiter)
         end)
+    end
+
+    -- settle: how long the window needs after the Space animation before callback can act on it.
+    function powerWindows:_leaveFullscreenThen(window, settle, callback)
+        window:setFullScreen(false)
+        self:_waitUntil(
+            function() return not window:isFullScreen() end,
+            function() self:_after(settle, callback) end,
+            FULLSCREEN_POLL, FULLSCREEN_TIMEOUT)
     end
 end

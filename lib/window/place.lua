@@ -1,108 +1,93 @@
+-- Video in the corner fits the video box, which keeps a gap above the bottom edge.
 local ASPECT_AREA = { main = "main", full = "full", corner = "video", side = "side" }
 local ASPECT_ANCHOR = { main = "topLeft", full = "center", corner = "top", side = "topLeft" }
 
-return function(obj, geometry, front, screenFrame)
-    function obj:_set(win, rect)
-        win:setFrame(rect, self.config.animation)
-    end
+return function(powerWindows, geometry, query)
+    local withWindow = query.withWindow
+
+    function powerWindows:_write(window, rect) window:setFrame(rect, 0) end
+
+    function powerWindows:_set(window, rect) window:setFrame(rect, self.config.animation) end
 
     -- Chromium PiP caps at ~80% of the requested area but keeps the top-left: size, read back, position.
-    function obj:_fit(win, box, anchor)
-        local current = win:frame()
+    function powerWindows:_fit(window, box, anchor)
+        local current = window:frame()
         if current.w == 0 or current.h == 0 then return end
-        win:setFrame(geometry.fit(box, current.h / current.w, anchor), 0)
-        local actual = win:frame()
-        local pos = geometry.anchor(box, actual.w, actual.h, anchor)
-        win:setTopLeft({ x = pos.x, y = pos.y })
+        self:_write(window, geometry.fit(box, current.h / current.w, anchor))
+        local actual = window:frame()
+        local position = geometry.anchor(box, actual.w, actual.h, anchor)
+        window:setTopLeft({ x = position.x, y = position.y })
     end
 
-    function obj:_placeDevice(win, sf, where)
-        local current = win:frame()
+    function powerWindows:_placeDevice(window, config, screenFrame, slot)
+        local current = window:frame()
         if current.w == 0 or current.h == 0 then return end
-        local c = self.config
-        local w, h = geometry.deviceSize(c, sf, current.h / current.w)
-        local raise = sf.h * c.device.raise
-        local x, y
-        if where == "full" then
-            x, y = sf.x + (sf.w - w) / 2, sf.y + (sf.h - h) / 2 - raise
-        elseif where == "main" then
-            x, y = sf.x + sf.w * c.gap, sf.y + (sf.h - h) / 2 - raise
+        self:_set(window, geometry.devicePlace(config, screenFrame, current.h / current.w, slot))
+    end
+
+    function powerWindows:_place(window, resolved, slot)
+        local config, screenFrame = self:_screenLayoutOf(window)
+        if not screenFrame then return end
+        slot = slot or resolved.slot
+        if slot == "dialog" then
+            self:_set(window, geometry.smallDialog(config, screenFrame, window:frame()))
+        elseif resolved.device then
+            self:_placeDevice(window, config, screenFrame, slot)
+        elseif slot == "stack" then
+            self:_set(window, geometry.rect(config, "side", screenFrame))
+        elseif resolved.keepAspect then
+            self:_fit(window, geometry.rect(config, ASPECT_AREA[slot], screenFrame), ASPECT_ANCHOR[slot])
         else
-            x, y = sf.x + sf.w * c.split, sf.y + sf.h * c.gap
-        end
-        self:_set(win, { x = x, y = y, w = w, h = h })
-    end
-
-    function obj:_place(win, r, where)
-        local sf = screenFrame(win)
-        if not sf then return end
-        where = where or r.slot
-        local c = self.config
-        if where == "dialog" then
-            self:_set(win, geometry.smallDialog(c, sf, win:frame()))
-        elseif r.device then
-            self:_placeDevice(win, sf, where)
-        elseif where == "stack" then
-            self:_set(win, geometry.rect(c, "side", sf))
-        elseif r.keepAspect then
-            self:_fit(win, geometry.rect(c, ASPECT_AREA[where], sf), ASPECT_ANCHOR[where])
-        else
-            self:_set(win, geometry.rect(c, where, sf))
+            self:_set(window, geometry.rect(config, slot, screenFrame))
         end
     end
 
-    --- PowerWindows:placeDefault([win])
-    --- Method
-    --- Puts `win` (default: frontmost) in its slot; a stack window re-lays the column.
-    function obj:placeDefault(win)
-        win = win or front()
-        if not win then return end
-        local r = self:resolve(win)
-        if not r then return end
-        if r.slot == "stack" then
-            local screen = win:screen()
-            if screen then self:_placeStack(screen) end
-            return
-        end
-        self:_place(win, r)
+    local function restackColumnOf(self, window)
+        local screen = window:screen()
+        if screen then self:_placeStack(screen) end
     end
 
-    --- PowerWindows:moveLeft([win])
-    --- Method
-    --- Puts `win` (default: frontmost) into the big left slot.
-    function obj:moveLeft(win)
-        win = win or front()
-        if not win then return end
-        self:_place(win, self:resolve(win) or { slot = "main" }, "main")
+    function powerWindows:_resolveOr(window, slot)
+        return self:resolve(window) or { slot = slot }
     end
 
-    --- PowerWindows:moveRight([win])
+    --- PowerWindows:placeDefault([window])
     --- Method
-    --- Puts `win` (default: frontmost) into the right column; corner and dialog keep their slot.
-    function obj:moveRight(win)
-        win = win or front()
-        if not win then return end
-        local r = self:resolve(win) or { slot = "side" }
-        if r.slot == "stack" then
-            local screen = win:screen()
-            if screen then self:_placeStack(screen) end
-            return
-        end
-        local where = (r.slot == "corner" or r.slot == "dialog") and r.slot or "side"
-        self:_place(win, r, where)
-    end
+    --- Puts `window` (default: frontmost) in its slot; a stack window re-lays the column.
+    powerWindows.placeDefault = withWindow(function(self, window)
+        local resolved = self:resolve(window)
+        if not resolved then return end
+        if resolved.slot == "stack" then return restackColumnOf(self, window) end
+        self:_place(window, resolved)
+    end)
 
-    --- PowerWindows:moveFull([win])
+    --- PowerWindows:moveLeft([window])
     --- Method
-    --- Stretches `win` (default: frontmost) over the screen with gaps; not native fullscreen.
-    function obj:moveFull(win)
-        win = win or front()
-        if not win then return end
-        self:_place(win, self:resolve(win) or { slot = "main" }, "full")
-    end
+    --- Puts `window` (default: frontmost) into the big left slot.
+    powerWindows.moveLeft = withWindow(function(self, window)
+        self:_place(window, self:_resolveOr(window, "main"), "main")
+    end)
 
-    function obj:_isAt(win, name)
-        local sf = screenFrame(win)
-        return sf ~= nil and geometry.near(win:frame(), geometry.rect(self.config, name, sf), self.config.tolerance)
+    --- PowerWindows:moveRight([window])
+    --- Method
+    --- Puts `window` (default: frontmost) into the right column; corner and dialog keep their slot, a stack window re-lays the column.
+    powerWindows.moveRight = withWindow(function(self, window)
+        local resolved = self:_resolveOr(window, "side")
+        if resolved.slot == "stack" then return restackColumnOf(self, window) end
+        local slot = (resolved.slot == "corner" or resolved.slot == "dialog") and resolved.slot or "side"
+        self:_place(window, resolved, slot)
+    end)
+
+    --- PowerWindows:moveFull([window])
+    --- Method
+    --- Stretches `window` (default: frontmost) over the screen with gaps; not native fullscreen.
+    powerWindows.moveFull = withWindow(function(self, window)
+        self:_place(window, self:_resolveOr(window, "main"), "full")
+    end)
+
+    function powerWindows:_isAt(window, area)
+        local config, screenFrame = self:_screenLayoutOf(window)
+        return screenFrame ~= nil
+            and geometry.near(window:frame(), geometry.rect(config, area, screenFrame), self.config.tolerance)
     end
 end

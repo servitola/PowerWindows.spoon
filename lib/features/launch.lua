@@ -1,54 +1,56 @@
 -- Timers keyed per pid / window id: concurrent launches must not cancel each other.
 local POLL_INTERVAL, POLL_TIMEOUT = 0.3, 30 -- Rider (JVM) shows its window slowly
 -- Electron re-centers after load: put the window back once, later moves are the user's.
-local ENFORCE_INTERVAL, ENFORCE_DURATION, ENFORCE_TOLERANCE = 0.5, 12, 4
+local ENFORCE_INTERVAL, ENFORCE_DURATION = 0.5, 12
 -- AX window list is unsettled at windowCreated.
 local FINDER_SETTLE = 0.2
 
-return function(pw, opts)
-    assert(type(opts.bundles) == "table",
+return function(powerWindows, geometry, options)
+    assert(type(options.bundles) == "table",
         "PowerWindows: experimental.placeOnLaunch.bundles must be a list of bundle IDs")
     local bundles = {}
-    for _, bundle in ipairs(opts.bundles) do bundles[bundle] = true end
+    for _, bundle in ipairs(options.bundles) do bundles[bundle] = true end
 
-    local function target(win)
-        local r = pw:resolve(win)
-        local screen = win:screen()
-        if not r or r.keepAspect or r.device or not screen then return nil end
-        if r.slot ~= "main" and r.slot ~= "side" and r.slot ~= "corner" then return nil end
-        return pw.geometry.rect(pw.config, r.slot, screen:frame())
+    local function target(window)
+        local resolved = powerWindows:resolve(window)
+        local screen = window:screen()
+        if not resolved or resolved.keepAspect or resolved.device or not screen then return nil end
+        local slot = resolved.slot
+        if slot == "stack" or slot == "dialog" then return nil end
+        local config, screenFrame = powerWindows:_screenLayout(screen)
+        return geometry.rect(config, slot, screenFrame)
     end
 
     -- Electron recreates the window after load and the old AX object dies: re-fetch each tick.
     local function enforce(app)
         local key, endKey = "launch:enforce:" .. app:pid(), "launch:enforceEnd:" .. app:pid()
-        pw:_cancel(endKey)
-        pw:_every(ENFORCE_INTERVAL, function()
+        powerWindows:_cancel(endKey)
+        powerWindows:_every(ENFORCE_INTERVAL, function()
             if not app:isRunning() then return true end
-            local win = app:mainWindow()
-            if not win or not win:isStandard() then return end
-            local want = target(win)
-            local f = win:frame()
-            if want and f.w > 0 and not pw.geometry.near(f, want, ENFORCE_TOLERANCE) then
-                if not pw:_skipped(win) then pw:placeDefault(win) end
+            local window = app:mainWindow()
+            if not window or not window:isStandard() then return end
+            local want = target(window)
+            local frame = window:frame()
+            if want and frame.w > 0 and not geometry.near(frame, want, powerWindows.config.tolerance) then
+                if not powerWindows:_skipped(window) then powerWindows:placeDefault(window) end
                 return true
             end
         end, key)
-        pw:_after(ENFORCE_DURATION, function() pw:_cancel(key) end, endKey)
+        powerWindows:_after(ENFORCE_DURATION, function() powerWindows:_cancel(key) end, endKey)
     end
 
     local function poll(app)
         local key, endKey = "launch:poll:" .. app:pid(), "launch:pollEnd:" .. app:pid()
-        pw:_cancel(endKey)
-        pw:_every(POLL_INTERVAL, function()
-            local win = app:mainWindow()
-            if not win or not win:isStandard() then return end
-            pw:_cancel(endKey)
-            if not pw:_skipped(win) then pw:placeDefault(win) end
+        powerWindows:_cancel(endKey)
+        powerWindows:_every(POLL_INTERVAL, function()
+            local window = app:mainWindow()
+            if not window or not window:isStandard() then return end
+            powerWindows:_cancel(endKey)
+            if not powerWindows:_skipped(window) then powerWindows:placeDefault(window) end
             enforce(app)
             return true
         end, key)
-        pw:_after(POLL_TIMEOUT, function() pw:_cancel(key) end, endKey)
+        powerWindows:_after(POLL_TIMEOUT, function() powerWindows:_cancel(key) end, endKey)
     end
 
     local watcher = hs.application.watcher.new(function(_, event, app)
@@ -59,18 +61,18 @@ return function(pw, opts)
 
     -- Finder never relaunches: place a window only when it is the only one.
     local finderFilter
-    if opts.finderFirstWindow then
+    if options.finderFirstWindow then
         finderFilter = hs.window.filter.new("Finder")
-        finderFilter:subscribe(hs.window.filter.windowCreated, function(win)
-            pw:_after(FINDER_SETTLE, function()
-                if not win:isStandard() then return end
-                local app = win:application()
+        finderFilter:subscribe(hs.window.filter.windowCreated, function(window)
+            powerWindows:_after(FINDER_SETTLE, function()
+                if not window:isStandard() then return end
+                local app = window:application()
                 if not app then return end
                 for _, other in ipairs(app:allWindows()) do
-                    if other:isStandard() and other:id() ~= win:id() then return end
+                    if other:isStandard() and other:id() ~= window:id() then return end
                 end
-                if not pw:_skipped(win) then pw:placeDefault(win) end
-            end, "launch:finder:" .. tostring(win:id()))
+                if not powerWindows:_skipped(window) then powerWindows:placeDefault(window) end
+            end, "launch:finder:" .. tostring(window:id()))
         end)
     end
 
@@ -78,7 +80,7 @@ return function(pw, opts)
         stop = function()
             watcher:stop()
             if finderFilter then finderFilter:delete() end
-            pw:_cancelPrefix("launch:")
+            powerWindows:_cancelPrefix("launch:")
         end,
     }
 end

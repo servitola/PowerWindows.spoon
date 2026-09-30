@@ -1,5 +1,6 @@
 -- { bundle or "*", title = pattern, notTitle = pattern, maxSize = { w, h } (strictly less), maxTitle = chars }
--- Any match = small dialog: top right corner. Beats overrides and catalog slots, not `false`.
+-- Any match = small dialog, top right corner. Beats overrides and catalog slots; loses to `rule` and to any `false`.
+-- Titles assume an English macOS; the size-only entries match in any language.
 return {
     { "com.apple.finder", title = "^Copy", maxSize = { 600, 250 } },
     { "com.apple.finder", title = "^Move", maxSize = { 600, 250 } },

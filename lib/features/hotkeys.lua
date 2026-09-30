@@ -1,5 +1,8 @@
-return function(obj, actions)
-    function obj:defaultHotkeys()
+return function(powerWindows, actions)
+    --- PowerWindows:defaultHotkeys() -> table
+    --- Method
+    --- The `{ action = { {mods, key}, ... } }` mapping `start()` binds from `config.keys`.
+    function powerWindows:defaultHotkeys()
         local mapping = {}
         local function add(chords, mods)
             for action, key in pairs(chords) do
@@ -17,20 +20,20 @@ return function(obj, actions)
         return mapping
     end
 
-    function obj:_bind(mapping, into)
-        for action, spec in pairs(mapping) do
+    function powerWindows:_bind(mapping, into)
+        for action, chordOrChords in pairs(mapping) do
             assert(actions[action], "PowerWindows: unknown action " .. tostring(action))
-            local chords = type(spec[2]) == "string" and { spec } or spec
+            local chords = type(chordOrChords[2]) == "string" and { chordOrChords } or chordOrChords
             for _, chord in ipairs(chords) do
                 table.insert(into, hs.hotkey.bind(chord[1], chord[2], function() self[action](self) end))
             end
         end
     end
 
-    --- PowerWindows:bindHotkeys(mapping)
+    --- PowerWindows:bindHotkeys(mapping) -> self
     --- Method
     --- Binds `{ action = {mods, key} }` or a list of chords per action; survives `start()`.
-    function obj:bindHotkeys(mapping)
+    function powerWindows:bindHotkeys(mapping)
         self:_bind(mapping, self._userHotkeys)
         return self
     end
