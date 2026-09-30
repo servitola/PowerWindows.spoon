@@ -39,12 +39,61 @@ function settings.macosKeys(value, actions, keycodes)
     return byCode, needsGlobe
 end
 
--- Level 3 points the error at the configure call.
-function settings.merge(current, changes)
-    for key, value in pairs(changes) do
-        if current[key] == nil then
-            error("PowerWindows: unknown setting '" .. tostring(key) .. "' (see config/settings.lua)", 3)
+local KEY_TABLES = { "arrows", "shiftedArrows", "letters", "shiftedLetters" }
+
+-- What merge cannot see: action names, key names, launch options. Raises with no position,
+-- since it runs both in configure and in start.
+function settings.validate(config, actions, keycodes)
+    settings.macosKeys(config.macosKeys, actions, keycodes)
+    for _, group in ipairs(KEY_TABLES) do
+        for action, key in pairs(config.keys[group]) do
+            local path = "keys." .. group .. "." .. tostring(action)
+            if not actions[action] then error("PowerWindows: " .. path .. ": unknown action", 0) end
+            if type(key) ~= "string" then error("PowerWindows: " .. path .. ": key must be a string", 0) end
         end
+    end
+    local launch = config.experimental.placeOnLaunch
+    if launch and type(launch.bundles) ~= "table" then
+        error("PowerWindows: experimental.placeOnLaunch.bundles must be a list of bundle IDs", 0)
+    end
+end
+
+local function unknown(path)
+    return "unknown setting '" .. path .. "' (see config/settings.lua)"
+end
+
+-- Closed maps take only the keys of their defaults; open ones are keyed by bundle or name.
+local CLOSED_MAPS = { device = true, dialog = true, keys = true }
+local OPEN_MAPS = { overrides = true, focusSets = true, experimental = true }
+
+local function checkValue(current, value, path, name)
+    if current == nil then return unknown(path) end
+    if type(current) == "number" and type(value) ~= "number" then
+        return "setting '" .. path .. "' must be a number"
+    end
+    if (CLOSED_MAPS[name] or OPEN_MAPS[name]) and not isMap(value) then
+        return "setting '" .. path .. "' must be a table"
+    end
+    if CLOSED_MAPS[name] then
+        for key, field in pairs(value) do
+            local problem = checkValue(current[key], field, path .. "." .. tostring(key))
+            if problem then return problem end
+        end
+    end
+end
+
+local function check(current, changes)
+    for key, value in pairs(changes) do
+        local problem = checkValue(current[key], value, tostring(key), key)
+        if problem then return problem end
+    end
+end
+
+-- Checks everything before changing anything; level 3 points the error at the configure call.
+function settings.merge(current, changes)
+    local problem = check(current, changes)
+    if problem then error("PowerWindows: " .. problem, 3) end
+    for key, value in pairs(changes) do
         if isMap(current[key]) and isMap(value) then
             for innerKey, innerValue in pairs(value) do current[key][innerKey] = innerValue end
         else

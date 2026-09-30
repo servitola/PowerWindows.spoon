@@ -6,8 +6,6 @@ local ENFORCE_INTERVAL, ENFORCE_DURATION = 0.5, 12
 local FINDER_SETTLE = 0.2
 
 return function(powerWindows, geometry, options)
-    assert(type(options.bundles) == "table",
-        "PowerWindows: experimental.placeOnLaunch.bundles must be a list of bundle IDs")
     local bundles = {}
     for _, bundle in ipairs(options.bundles) do bundles[bundle] = true end
 

@@ -30,6 +30,11 @@ loadPart("lib/window/minimize")(powerWindows, query)
 loadPart("lib/features/hotkeys")(powerWindows, settings.ACTIONS)
 loadPart("lib/features/globe")(powerWindows, settings)
 
+-- An unknown slot would otherwise surface only when a window of that app is placed.
+local function checkOverrides(overrides)
+    for _, value in pairs(overrides) do rules.normalize(value, "override") end
+end
+
 local function release(self)
     for _, hotkey in ipairs(self._hotkeys) do hotkey:delete() end
     self._hotkeys = {}
@@ -49,8 +54,11 @@ end
 --- PowerWindows:configure(config) -> self
 --- Method
 --- Merges `config` into the current settings: maps key by key, one level deep; lists replaced.
---- An unknown key raises.
+--- A typo or a wrong type raises, nested keys included.
 function powerWindows:configure(config)
+    local merged = settings.merge(settings.copy(self.config), config)
+    settings.validate(merged, settings.ACTIONS, hs.keycodes.map)
+    checkOverrides(merged.overrides)
     settings.merge(self.config, config)
     return self
 end
@@ -59,6 +67,7 @@ end
 --- Method
 --- Sets where `bundle` goes: a slot, `false`, a table, or `nil` to clear.
 function powerWindows:setOverride(bundle, value)
+    if value ~= nil then rules.normalize(value, "override") end
     self.config.overrides[bundle] = value
 end
 
@@ -91,6 +100,7 @@ end
 --- Method
 --- Binds the default chords; starts Globe keys and place-on-launch when enabled. Calling again rebinds.
 function powerWindows:start()
+    settings.validate(self.config, settings.ACTIONS, hs.keycodes.map)
     release(self)
     if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
     self:_startGlobe()

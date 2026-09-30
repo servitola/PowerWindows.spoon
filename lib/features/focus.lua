@@ -83,7 +83,8 @@ return function(powerWindows, catalog)
     function focusSets.videoSlot(name, set)
         if set.video == nil then return "main" end
         return VIDEO_SLOTS[set.video]
-            or error("PowerWindows: focus set " .. name .. ": video must be \"main\" or \"corner\", not " .. tostring(set.video), 2)
+            or error("PowerWindows: focus set " .. name .. ": video must be \"main\" (alias \"left\") or \"corner\", not "
+                .. tostring(set.video), 2)
     end
 
     function focusSets.apply(name)
