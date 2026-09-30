@@ -1,14 +1,14 @@
 -- { bundle or "*", slot or false, title = pattern, notTitle = pattern, maxTitle = chars,
---   maxSize = { w, h } (strictly less), keepAspect, device, popup }
+--   maxSize = { w, h } (strictly less), keepAspect, device, popup, sample = a title the pattern matches (tests) }
 -- Unlisted apps go to main. First match wins: title/size entries above the plain one.
 -- popup = floats over its app (PiP); focus sets keep it and minimize the app's other windows.
 local catalog = {}
 
-local CHROMIUM_PLAYER = "^Picture in Picture$"
-local GECKO_PLAYER = "^Picture%-in%-Picture$"
+local CHROMIUM_PLAYER = { title = "^Picture in Picture$", sample = "Picture in Picture" }
+local GECKO_PLAYER = { title = "^Picture%-in%-Picture$", sample = "Picture-in-Picture" }
 
-local function pictureInPicture(bundle, title)
-    return { bundle, "corner", title = title, keepAspect = true, popup = true }
+local function pictureInPicture(bundle, player)
+    return { bundle, "corner", title = player.title, sample = player.sample, keepAspect = true, popup = true }
 end
 
 catalog.apps = {
@@ -26,7 +26,7 @@ catalog.apps = {
 
     { "com.colliderli.iina",               "corner", keepAspect = true },
     { "org.videolan.vlc",                  "corner", keepAspect = true },
-    { "com.apple.Music",                   "corner", title = "^Mini Player$" },
+    { "com.apple.Music",                   "corner", title = "^Mini Player$", sample = "Mini Player" },
 
     pictureInPicture("com.google.Chrome", CHROMIUM_PLAYER),
     pictureInPicture("com.vivaldi.Vivaldi", CHROMIUM_PLAYER),
@@ -39,10 +39,10 @@ catalog.apps = {
     pictureInPicture("app.zen-browser.zen", GECKO_PLAYER),
 
     { "com.apple.iphonesimulator",         "stack", keepAspect = true, device = true },
-    { "*",                                 "stack", title = "^Android Emulator" },
+    { "*",                                 "stack", title = "^Android Emulator", sample = "Android Emulator - Pixel_8:5554" },
 
-    { "com.apple.ActivityMonitor",         "corner", title = "^CPU History$" },
-    { "com.apple.ActivityMonitor",         "corner", title = "^GPU History$" },
+    { "com.apple.ActivityMonitor",         "corner", title = "^CPU History$", sample = "CPU History" },
+    { "com.apple.ActivityMonitor",         "corner", title = "^GPU History$", sample = "GPU History" },
     { "com.apple.ActivityMonitor",         "corner", maxSize = { 600, 400 } },
 
     { "com.raycast.macos",                 false },
