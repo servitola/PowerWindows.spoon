@@ -16,22 +16,32 @@ settings.copy = copy
 
 settings.ACTIONS = {}
 for _, name in ipairs({
-    "left", "right", "fullscreen", "arrangeAll", "halfLeft", "halfRight", "top60", "bottom40",
-    "center", "swapSides", "minimizeAndFocusNext", "minimizeCurrent",
+    "left", "right", "fullscreen", "arrangeAll", "halfLeft", "halfRight",
+    "top60", "bottom40", "center", "swapSides", "minimizeAndFocusNext",
+    "minimizeCurrent",
 }) do settings.ACTIONS[name] = true end
 
 -- keyCode → action, keyCode → true when the key needs the tracked Globe press;
--- macOS itself puts the fn flag on arrows and other named keys, never on a character.
+-- macOS itself puts the fn flag on arrows and other named keys, never on a
+-- character.
 function settings.macosKeys(value, actions, keycodes)
     if not value then return nil end
     local byCode, needsGlobe = {}, {}
     for key, action in pairs(value) do
         if action ~= false then
             if not actions[action] then
-                error("PowerWindows: macosKeys." .. tostring(key) .. ": unknown action '" .. tostring(action) .. "'", 0)
+                error(
+                    "PowerWindows: macosKeys." .. tostring(key)
+                        .. ": unknown action '" .. tostring(action) .. "'",
+                    0
+                )
             end
             local code = keycodes[key]
-                or error("PowerWindows: macosKeys: unknown key '" .. tostring(key) .. "'", 0)
+                or error(
+                    "PowerWindows: macosKeys: unknown key '"
+                        .. tostring(key) .. "'",
+                    0
+                )
             byCode[code] = action
             if #key > 1 then needsGlobe[code] = true end
         end
@@ -41,24 +51,35 @@ end
 
 local KEY_TABLES = { "arrows", "shiftedArrows", "letters", "shiftedLetters" }
 
--- What merge cannot see: action names, key names, launch options. Raises with no position,
--- since it runs both in configure and in start.
+-- What merge cannot see: action names, key names, launch options. Raises with
+-- no position, since it runs both in configure and in start.
 function settings.validate(config, actions, keycodes)
     settings.macosKeys(config.macosKeys, actions, keycodes)
     for _, group in ipairs(KEY_TABLES) do
         for action, key in pairs(config.keys[group]) do
             local path = "keys." .. group .. "." .. tostring(action)
-            if not actions[action] then error("PowerWindows: " .. path .. ": unknown action", 0) end
-            if type(key) ~= "string" then error("PowerWindows: " .. path .. ": key must be a string", 0) end
+            if not actions[action] then
+                error("PowerWindows: " .. path .. ": unknown action", 0)
+            end
+            if type(key) ~= "string" then
+                error("PowerWindows: " .. path .. ": key must be a string", 0)
+            end
         end
     end
     local launch = config.experimental.placeOnLaunch
     if launch and type(launch.bundles) ~= "table" then
-        error("PowerWindows: experimental.placeOnLaunch.bundles must be a list of bundle IDs", 0)
+        error(
+            "PowerWindows: experimental.placeOnLaunch.bundles must be a list \z
+             of bundle IDs",
+            0
+        )
     end
 end
 
-local PROFILE_KEYS = { gap = true, split = true, sideHeight = true, topShare = true, device = true, dialog = true }
+local PROFILE_KEYS = {
+    gap = true, split = true, sideHeight = true, topShare = true, device = true,
+    dialog = true,
+}
 -- Width over height: 21:9 is 2.33, 16:9 is 1.78.
 local ULTRAWIDE = 2.1
 
@@ -66,9 +87,12 @@ local function unknown(path)
     return "unknown setting '" .. path .. "' (see config/settings.lua)"
 end
 
--- Closed maps take only the keys of their defaults; open ones are keyed by bundle, screen or name.
+-- Closed maps take only the keys of their defaults; open ones are keyed by
+-- bundle, screen or name.
 local CLOSED_MAPS = { device = true, dialog = true, keys = true }
-local OPEN_MAPS = { overrides = true, screens = true, focusSets = true, experimental = true }
+local OPEN_MAPS = {
+    overrides = true, screens = true, focusSets = true, experimental = true,
+}
 
 local function checkValue(current, value, path, name)
     if current == nil then return unknown(path) end
@@ -80,7 +104,9 @@ local function checkValue(current, value, path, name)
     end
     if CLOSED_MAPS[name] then
         for key, field in pairs(value) do
-            local problem = checkValue(current[key], field, path .. "." .. tostring(key))
+            local problem = checkValue(
+                current[key], field, path .. "." .. tostring(key)
+            )
             if problem then return problem end
         end
     end
@@ -114,13 +140,16 @@ local function overlay(base, top)
     return result
 end
 
--- Checks everything before changing anything; level 3 points the error at the configure call.
+-- Checks everything before changing anything; level 3 points the error at the
+-- configure call.
 function settings.merge(current, changes)
     local problem = check(current, changes)
     if problem then error("PowerWindows: " .. problem, 3) end
     for key, value in pairs(changes) do
         if isMap(current[key]) and isMap(value) then
-            for innerKey, innerValue in pairs(value) do current[key][innerKey] = innerValue end
+            for innerKey, innerValue in pairs(value) do
+                current[key][innerKey] = innerValue
+            end
         else
             current[key] = value
         end
@@ -128,7 +157,8 @@ function settings.merge(current, changes)
     return current
 end
 
--- screen = { name, w, h }. Name beats shape; one profile, merged over the base one level deep.
+-- screen = { name, w, h }. Name beats shape; one profile, merged over the base
+-- one level deep.
 function settings.forScreen(config, screen)
     local screens = config.screens
     local profile = screens[screen.name]
@@ -137,7 +167,8 @@ function settings.forScreen(config, screen)
     if not profile then return config end
     local result = overlay(config, {})
     for key, value in pairs(profile) do
-        result[key] = (isMap(config[key]) and isMap(value)) and overlay(config[key], value) or value
+        result[key] = (isMap(config[key]) and isMap(value))
+            and overlay(config[key], value) or value
     end
     return result
 end

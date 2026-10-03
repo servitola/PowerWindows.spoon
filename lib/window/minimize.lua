@@ -1,4 +1,5 @@
--- Longer than placing's wait (actions.lua): macOS refuses to minimize until the Space animation ends.
+-- Longer than placing's wait (actions.lua): macOS refuses to minimize until
+-- the Space animation ends.
 local AFTER_FULLSCREEN = 0.6
 local RETRY_INTERVAL, RETRIES = 0.3, 4
 local MINIMIZED_POLL, MINIMIZED_TIMEOUT = 0.05, 2.5
@@ -27,7 +28,8 @@ return function(powerWindows, query)
         end
     end
 
-    -- macOS does not pass focus on after minimize; Hide is no substitute: refused for the last visible app.
+    -- macOS does not pass focus on after minimize; Hide is no substitute:
+    -- refused for the last visible app.
     local function pickNextWindow(self, window)
         local screen = window:screen()
         local ordered = hs.window.orderedWindows()
@@ -50,7 +52,8 @@ return function(powerWindows, query)
 
     local function handFocusTo(self, nextWindow, minimized)
         local function takeFocus()
-            -- Bare focus() may raise another window of the app (Hammerspoon#370).
+            -- Bare focus() may raise another window of the app
+            -- (Hammerspoon#370).
             local application = nextWindow:application()
             if application then application:activate(true) end
             nextWindow:raise():focus()
@@ -59,10 +62,13 @@ return function(powerWindows, query)
             function() return minimized:isMinimized() end,
             function()
                 takeFocus()
-                -- The minimize animation hands activation back to the previous app.
+                -- The minimize animation hands activation back to the previous
+                -- app.
                 self:_after(REFOCUS_DELAY, function()
                     local focused = query.focused()
-                    if not focused or focused:id() ~= nextWindow:id() then takeFocus() end
+                    if not focused or focused:id() ~= nextWindow:id() then
+                        takeFocus()
+                    end
                 end)
             end,
             MINIMIZED_POLL, MINIMIZED_TIMEOUT)
@@ -70,13 +76,17 @@ return function(powerWindows, query)
 
     --- PowerWindows:minimizeAndFocusNext([window])
     --- Method
-    --- Minimizes `window` (default: focused) and focuses the next: same app before other apps, same screen first within each.
+    --- Minimizes `window` (default: focused) and focuses the next: same app
+    --- before other apps, same screen first within each.
     function powerWindows:minimizeAndFocusNext(window)
         window = window or query.focused()
         if not window then return end
         -- Fullscreen owns its Space and cannot minimize.
         if window:isFullScreen() then
-            return self:_leaveFullscreenThen(window, AFTER_FULLSCREEN, function() self:minimizeAndFocusNext(window) end)
+            return self:_leaveFullscreenThen(
+                window, AFTER_FULLSCREEN,
+                function() self:minimizeAndFocusNext(window) end
+            )
         end
         local nextWindow = pickNextWindow(self, window)
         -- Minimize first: minimizing a background window silently fails.

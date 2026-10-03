@@ -12,7 +12,9 @@ return function(powerWindows, settings)
 
     function powerWindows:_screenLayout(screen)
         local full = screen:fullFrame()
-        return settings.forScreen(self.config, { name = screen:name(), w = full.w, h = full.h }), screen:frame()
+        return settings.forScreen(
+            self.config, { name = screen:name(), w = full.w, h = full.h }
+        ), screen:frame()
     end
 
     function powerWindows:_screenLayoutOf(window, screen)
@@ -24,9 +26,12 @@ return function(powerWindows, settings)
         local app = window:application()
         local frame = window:frame()
         local element = axuielement.windowElement(window)
-        return { bundle = app and app:bundleID(), app = app and app:title() or "",
-                 title = window:title() or "", w = frame.w, h = frame.h,
-                 identifier = element and element:attributeValue("AXIdentifier") }
+        return {
+            bundle = app and app:bundleID(),
+            app = app and app:title() or "",
+            title = window:title() or "", w = frame.w, h = frame.h,
+            identifier = element and element:attributeValue("AXIdentifier"),
+        }
     end
 
     function powerWindows:_skipped(window)
@@ -39,16 +44,19 @@ return function(powerWindows, settings)
 
     --- PowerWindows:isDecoration([window]) -> boolean
     --- Method
-    --- True for never-touched windows and fitted corner video (PiP); swaps and focus-next skip them.
+    --- True for never-touched windows and fitted corner video (PiP); swaps and
+    --- focus-next skip them.
     function powerWindows:isDecoration(window)
         window = window or query.focused()
         if not window then return false end
         local resolved = self:resolve(window)
-        return resolved == false or (resolved.slot == "corner" and resolved.keepAspect == true)
+        return resolved == false
+            or (resolved.slot == "corner" and resolved.keepAspect == true)
     end
 
     function powerWindows:_isCandidate(window)
-        return window:isStandard() and window:isVisible() and not self:isDecoration(window)
+        return window:isStandard() and window:isVisible()
+            and not self:isDecoration(window)
     end
 
     return query

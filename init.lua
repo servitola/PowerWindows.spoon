@@ -29,9 +29,12 @@ end
 
 --- PowerWindows:configure(config) -> self
 --- Method
---- Merge `config` into the current settings: maps key by key, one level deep; lists replaced.
+--- Merge `config` into the current settings: maps key by key, one level deep;
+--- lists replaced.
 function powerWindows:configure(config)
-    local merged = core.settings.merge(core.settings.copy(self.config), config)
+    local merged = core.settings.merge(
+        core.settings.copy(self.config), config
+    )
     domain.validate(merged)
     core.settings.merge(self.config, config)
     return self
@@ -47,33 +50,39 @@ end
 
 --- PowerWindows:addSkipPredicate(predicate)
 --- Method
---- Windows for which `predicate(window)` returns true are never moved automatically; a predicate that errors
---- counts as false.
+--- Windows for which `predicate(window)` returns true are never moved
+--- automatically; a predicate that errors counts as false.
 function powerWindows:addSkipPredicate(predicate)
     table.insert(self._skip, predicate)
 end
 
 --- PowerWindows:resolve([window]) -> table or false
 --- Method
---- `{ slot, source, keepAspect, device, popup }` for `window` (default: focused), or false.
+--- `{ slot, source, keepAspect, device, popup }` for `window` (default:
+--- focused), or false.
 function powerWindows:resolve(window)
     window = window or domain.query.focused()
     if not window or not window:application() then return false end
-    return core.rules.resolve(self.config, core.catalog.apps, core.dialogs, domain.query.info(window), window)
+    return core.rules.resolve(
+        self.config, core.catalog.apps, core.dialogs,
+        domain.query.info(window), window
+    )
 end
 
 --- PowerWindows:slotRect(name[, screen]) -> rect
 --- Method
---- Frame of `name` on `screen` (default: main screen): main, side, corner, video, full, halfLeft, halfRight, top60,
---- bottom40 or column.
+--- Frame of `name` on `screen` (default: main screen): main, side, corner,
+--- video, full, halfLeft, halfRight, top60, bottom40 or column.
 function powerWindows:slotRect(name, screen)
-    local config, screenFrame = self:_screenLayout(screen or hs.screen.mainScreen())
+    local config, screenFrame =
+        self:_screenLayout(screen or hs.screen.mainScreen())
     return core.geometry.rect(config, name, screenFrame)
 end
 
 --- PowerWindows:start() -> self
 --- Method
---- Binds the default chords; starts Globe keys, screen watcher and place-on-launch when enabled. Calling again rebinds.
+--- Binds the default chords; starts Globe keys, screen watcher and
+--- place-on-launch when enabled. Calling again rebinds.
 function powerWindows:start()
     domain.validate(self.config)
     self:stop()
@@ -86,8 +95,8 @@ end
 
 --- PowerWindows:stop() -> self
 --- Method
---- Deletes the default chords, disables `bindHotkeys` ones until `start()`, gives the Globe keys back,
---- stops the screen watcher and place-on-launch.
+--- Deletes the default chords, disables `bindHotkeys` ones until `start()`,
+--- gives the Globe keys back, stops the screen watcher and place-on-launch.
 function powerWindows:stop()
     self:_stopHotkeys()
     self:_stopGlobe()
@@ -98,7 +107,8 @@ end
 
 --- PowerWindows:focusSet(name) -> boolean
 --- Method
---- Applies `config.focusSets[name]`; false if absent, error if `video` is not "main"/"left"/"corner".
+--- Applies `config.focusSets[name]`; false if absent, error if `video` is not
+--- "main"/"left"/"corner".
 function powerWindows:focusSet(name) return domain.focusSets.apply(name) end
 
 return powerWindows

@@ -1,6 +1,8 @@
 local rules = {}
 
-rules.SLOTS = { main = true, side = true, corner = true, stack = true, dialog = true }
+rules.SLOTS = {
+    main = true, side = true, corner = true, stack = true, dialog = true,
+}
 
 function rules.normalize(value, source)
     if value == false then return false end
@@ -10,18 +12,26 @@ function rules.normalize(value, source)
     end
     local resolved = {}
     for key, field in pairs(value) do resolved[key] = field end
-    assert(rules.SLOTS[resolved.slot], "PowerWindows: unknown slot " .. tostring(resolved.slot))
+    assert(
+        rules.SLOTS[resolved.slot],
+        "PowerWindows: unknown slot " .. tostring(resolved.slot)
+    )
     resolved.source = source
     return resolved
 end
 
 local function matches(entry, info)
     if entry[1] ~= "*" and entry[1] ~= info.bundle then return false end
-    if entry.identifier and entry.identifier ~= info.identifier then return false end
+    if entry.identifier and entry.identifier ~= info.identifier then
+        return false
+    end
     if entry.title and not info.title:find(entry.title) then return false end
     if entry.notTitle and info.title:find(entry.notTitle) then return false end
     if entry.maxTitle and #info.title > entry.maxTitle then return false end
-    if entry.maxSize and not (info.w < entry.maxSize[1] and info.h < entry.maxSize[2]) then return false end
+    if entry.maxSize
+        and not (info.w < entry.maxSize[1] and info.h < entry.maxSize[2]) then
+        return false
+    end
     return true
 end
 
@@ -29,20 +39,28 @@ function rules.lookup(entries, info)
     for _, entry in ipairs(entries) do
         if matches(entry, info) then
             if entry[2] == false then return false end
-            return { slot = entry[2], keepAspect = entry.keepAspect, device = entry.device,
-                     popup = entry.popup, source = "catalog" }
+            return {
+                slot = entry[2], keepAspect = entry.keepAspect,
+                device = entry.device, popup = entry.popup, source = "catalog",
+            }
         end
     end
     return nil
 end
 
--- keepAspect and device windows have only these areas (ASPECT_AREA in place.lua, geometry.devicePlace).
+-- keepAspect and device windows have only these areas (ASPECT_AREA in
+-- place.lua, geometry.devicePlace).
 local FITTED = { main = true, side = true, corner = true, full = true }
 
--- The slot a window takes to another screen: where it sits now, else where it belongs.
+-- The slot a window takes to another screen: where it sits now, else where it
+-- belongs.
 function rules.carrySlot(detected, resolved)
-    if resolved.slot == "dialog" or resolved.slot == "stack" then return resolved.slot end
-    if (resolved.keepAspect or resolved.device) and not FITTED[detected] then return resolved.slot end
+    if resolved.slot == "dialog" or resolved.slot == "stack" then
+        return resolved.slot
+    end
+    if (resolved.keepAspect or resolved.device) and not FITTED[detected] then
+        return resolved.slot
+    end
     return detected or resolved.slot
 end
 
@@ -62,7 +80,8 @@ function rules.resolve(config, entries, dialogs, info, window)
     if override == false then return false end
     local found
     if config.catalog ~= false then found = rules.lookup(entries, info) end
-    -- `false` beats the dialog detector; an override slot beats the catalog's false.
+    -- `false` beats the dialog detector; an override slot beats the catalog's
+    -- false.
     if override == nil and found == false then return false end
     if config.dialogs ~= false and rules.isSmallDialog(dialogs, info) then
         return { slot = "dialog", source = "dialog" }

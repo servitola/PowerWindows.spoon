@@ -1,6 +1,7 @@
 local ACTIVATE_DELAY, CHORD_DELAY, POPUP_DELAY = 0.18, 0.08, 0.35
 local VIDEO_SLOTS = { main = "main", left = "main", corner = "corner" }
--- hs.application:kind(): an app with a Dock icon, not an agent or a background app.
+-- hs.application:kind(): an app with a Dock icon, not an agent or a background
+-- app.
 local REGULAR_APP = 1
 
 local function focusFirstRunning(bundles)
@@ -34,7 +35,9 @@ return function(powerWindows, catalog)
         local popupWindows = popups(app)
         if #popupWindows == 0 then
             if popupBundles[app:bundleID()] then
-                for _, window in ipairs(app:allWindows()) do window:minimize() end
+                for _, window in ipairs(app:allWindows()) do
+                    window:minimize()
+                end
             end
             if not app:isHidden() then app:hide() end
             return
@@ -43,19 +46,25 @@ return function(powerWindows, catalog)
         for _, window in ipairs(popupWindows) do
             if window:id() then popupIds[window:id()] = true end
             if not powerWindows:_skipped(window) then
-                powerWindows:_place(window, powerWindows:resolve(window), videoSlot)
+                powerWindows:_place(
+                    window, powerWindows:resolve(window), videoSlot
+                )
             end
         end
         for _, window in ipairs(app:allWindows()) do
-            if not popupIds[window:id()] and window:isStandard() then window:minimize() end
+            if not popupIds[window:id()] and window:isStandard() then
+                window:minimize()
+            end
         end
     end
 
-    -- The PiP window appears with a delay: send the browser's chord, lay out after.
+    -- The PiP window appears with a delay: send the browser's chord, lay out
+    -- after.
     local function popOut(app, videoSlot, popupBundles, done)
         local chord = catalog.pipChords[app:bundleID()]
         local frontWindow = app:focusedWindow() or app:mainWindow()
-        if not chord or not frontWindow or #popups(app) > 0 or not focusSets.looksLikeVideo(frontWindow:title()) then
+        if not chord or not frontWindow or #popups(app) > 0
+            or not focusSets.looksLikeVideo(frontWindow:title()) then
             return false
         end
         local bundle = app:bundleID()
@@ -76,15 +85,22 @@ return function(powerWindows, catalog)
         if app:isHidden() then app:unhide() end
         for _, window in ipairs(app:allWindows()) do
             if window:isMinimized() then window:unminimize() end
-            if not powerWindows:_skipped(window) then powerWindows:placeDefault(window) end
+            if not powerWindows:_skipped(window) then
+                powerWindows:placeDefault(window)
+            end
         end
     end
 
     function focusSets.videoSlot(name, set)
         if set.video == nil then return "main" end
         return VIDEO_SLOTS[set.video]
-            or error("PowerWindows: focus set " .. name .. ": video must be \"main\" (alias \"left\") or \"corner\", not "
-                .. tostring(set.video), 2)
+            or error(
+                "PowerWindows: focus set " .. name
+                    .. ": video must be \"main\" (alias \"left\") \z
+                        or \"corner\", not "
+                    .. tostring(set.video),
+                2
+            )
     end
 
     function focusSets.apply(name)
@@ -92,7 +108,9 @@ return function(powerWindows, catalog)
         if not set then return false end
         local videoSlot = focusSets.videoSlot(name, set)
         local keptBundles, custom = {}, set.custom or {}
-        for _, bundle in ipairs(set.keep or {}) do keptBundles[bundle] = true end
+        for _, bundle in ipairs(set.keep or {}) do
+            keptBundles[bundle] = true
+        end
         local popupBundles = catalog.popupBundles()
         local function focusFirst() focusFirstRunning(set.focus or {}) end
 

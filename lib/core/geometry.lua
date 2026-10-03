@@ -3,7 +3,8 @@ local geometry = {}
 -- Right and bottom margins differ from the gap: tuned by eye.
 local RIGHT_GAP_DIVISOR, BOTTOM_GAP_FACTOR = 1.5, 1.5
 
--- Gap in points becomes a share per axis, so every formula below stays in fractions.
+-- Gap in points becomes a share per axis, so every formula below stays in
+-- fractions.
 function geometry.gaps(config, screenFrame)
     if config.gap < 1 then return config.gap, config.gap end
     return config.gap / screenFrame.w, config.gap / screenFrame.h
@@ -14,45 +15,62 @@ local function edgesFor(config, screenFrame)
     return {
         gapX = gapX, gapY = gapY, betweenX = gapX * 2, betweenY = gapY * 2,
         left = gapX, top = gapY,
-        right = 1 - gapX / RIGHT_GAP_DIVISOR, bottom = 1 - gapY * BOTTOM_GAP_FACTOR,
+        right = 1 - gapX / RIGHT_GAP_DIVISOR,
+        bottom = 1 - gapY * BOTTOM_GAP_FACTOR,
     }
 end
 
 local function areaFraction(config, area, screenFrame)
     local edges = edgesFor(config, screenFrame)
     local split, side, top = config.split, config.sideHeight, config.topShare
-    local left, upper, right, bottom = edges.left, edges.top, edges.right, edges.bottom
+    local left, upper, right, bottom =
+        edges.left, edges.top, edges.right, edges.bottom
     local gapY, betweenX, betweenY = edges.gapY, edges.betweenX, edges.betweenY
     local rects = {
         main      = { left, upper, split - betweenX, bottom - upper },
         side      = { split, upper, right - split, side - gapY },
-        corner    = { split, side + betweenY, right - split, 1 - side - betweenY },
-        video     = { split, side + betweenY, right - split, 1 - side - betweenY * 2 },
+        corner    = {
+            split, side + betweenY, right - split, 1 - side - betweenY,
+        },
+        video     = {
+            split, side + betweenY, right - split, 1 - side - betweenY * 2,
+        },
         full      = { left, upper, right - left, bottom - upper },
         halfLeft  = { left, upper, 0.5 - betweenX, bottom - upper },
         halfRight = { 0.5, upper, right - 0.5, bottom - upper },
         top60     = { left, upper, right - left, top - betweenY },
         bottom40  = { left, top, right - left, bottom - top },
-        column    = { split, upper, right - split, bottom - upper }, -- stack windows share it
+        -- stack windows share it
+        column    = { split, upper, right - split, bottom - upper },
     }
-    local rect = assert(rects[area], "PowerWindows: unknown rect " .. tostring(area))
+    local rect = assert(
+        rects[area], "PowerWindows: unknown rect " .. tostring(area)
+    )
     return { x = rect[1], y = rect[2], w = rect[3], h = rect[4] }
 end
 
 function geometry.rect(config, area, screenFrame)
     local fraction = areaFraction(config, area, screenFrame)
     return {
-        x = screenFrame.x + screenFrame.w * fraction.x, y = screenFrame.y + screenFrame.h * fraction.y,
+        x = screenFrame.x + screenFrame.w * fraction.x,
+        y = screenFrame.y + screenFrame.h * fraction.y,
         w = screenFrame.w * fraction.w, h = screenFrame.h * fraction.h,
     }
 end
 
 function geometry.anchor(box, width, height, anchor)
     if anchor == "center" then
-        return { x = box.x + (box.w - width) / 2, y = box.y + (box.h - height) / 2, w = width, h = height }
+        return {
+            x = box.x + (box.w - width) / 2, y = box.y + (box.h - height) / 2,
+            w = width, h = height,
+        }
     elseif anchor == "top" then
-        -- Wider than the box (the app's minimum size): the right edge stays, or the window leaves the screen.
-        return { x = box.x + math.min((box.w - width) / 2, box.w - width), y = box.y, w = width, h = height }
+        -- Wider than the box (the app's minimum size): the right edge stays, or
+        -- the window leaves the screen.
+        return {
+            x = box.x + math.min((box.w - width) / 2, box.w - width),
+            y = box.y, w = width, h = height,
+        }
     end
     return { x = box.x, y = box.y, w = width, h = height }
 end
@@ -66,7 +84,8 @@ function geometry.fit(box, aspect, anchor)
     return geometry.anchor(box, width, height, anchor)
 end
 
--- Sized off the screen, not a slot: the column is too narrow for a readable phone.
+-- Sized off the screen, not a slot: the column is too narrow for a readable
+-- phone.
 function geometry.deviceSize(config, screenFrame, aspect)
     local width = screenFrame.w * config.device.width
     local height = width * aspect
@@ -110,8 +129,13 @@ end
 
 function geometry.smallDialog(config, screenFrame, current)
     local edges = edgesFor(config, screenFrame)
-    local width = math.min(current.w, screenFrame.w * (edges.right - config.split) * config.dialog.width)
-    local height = math.min(current.h, screenFrame.h * config.sideHeight * config.dialog.height)
+    local width = math.min(
+        current.w,
+        screenFrame.w * (edges.right - config.split) * config.dialog.width
+    )
+    local height = math.min(
+        current.h, screenFrame.h * config.sideHeight * config.dialog.height
+    )
     return {
         x = screenFrame.x + screenFrame.w * (1 - edges.gapX) - width,
         y = screenFrame.y + edges.top * screenFrame.h,
@@ -120,25 +144,36 @@ function geometry.smallDialog(config, screenFrame, current)
 end
 
 function geometry.near(first, second, tolerance)
-    return math.abs(first.x - second.x) <= tolerance and math.abs(first.y - second.y) <= tolerance
-        and math.abs(first.w - second.w) <= tolerance and math.abs(first.h - second.h) <= tolerance
+    return math.abs(first.x - second.x) <= tolerance
+        and math.abs(first.y - second.y) <= tolerance
+        and math.abs(first.w - second.w) <= tolerance
+        and math.abs(first.h - second.h) <= tolerance
 end
 
--- Terminal and iTerm snap their size to whole text cells, so a placed one can fall short of its
--- slot by up to a cell; the origin still has to match.
+-- Terminal and iTerm snap their size to whole text cells, so a placed one can
+-- fall short of its slot by up to a cell; the origin still has to match.
 local CELL_SLACK = 24
 
 function geometry.isAt(frame, rect, tolerance)
     local sizeTolerance = tolerance + CELL_SLACK
-    return math.abs(frame.x - rect.x) <= tolerance and math.abs(frame.y - rect.y) <= tolerance
-        and math.abs(frame.w - rect.w) <= sizeTolerance and math.abs(frame.h - rect.h) <= sizeTolerance
+    return math.abs(frame.x - rect.x) <= tolerance
+        and math.abs(frame.y - rect.y) <= tolerance
+        and math.abs(frame.w - rect.w) <= sizeTolerance
+        and math.abs(frame.h - rect.h) <= sizeTolerance
 end
 
-local KEPT_SLOTS = { "main", "side", "corner", "full", "halfLeft", "halfRight", "top60", "bottom40" }
+local KEPT_SLOTS = {
+    "main", "side", "corner", "full", "halfLeft", "halfRight", "top60",
+    "bottom40",
+}
 
 function geometry.slotAt(config, screenFrame, frame, tolerance)
     for _, slot in ipairs(KEPT_SLOTS) do
-        if geometry.isAt(frame, geometry.rect(config, slot, screenFrame), tolerance) then return slot end
+        if geometry.isAt(
+            frame, geometry.rect(config, slot, screenFrame), tolerance
+        ) then
+            return slot
+        end
     end
 end
 

@@ -1,4 +1,5 @@
--- Hammerspoon garbage-collects unreferenced timers mid-chain: hold each until it ends.
+-- Hammerspoon garbage-collects unreferenced timers mid-chain: hold each until
+-- it ends.
 -- A new timer under the same key cancels the old one.
 local FULLSCREEN_POLL, FULLSCREEN_TIMEOUT = 0.1, 3
 

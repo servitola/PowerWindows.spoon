@@ -3,7 +3,8 @@ return function(powerWindows, actions)
 
     --- PowerWindows:defaultHotkeys() -> table
     --- Method
-    --- The `{ action = { {mods, key}, ... } }` mapping `start()` binds from `config.keys`.
+    --- The `{ action = { {mods, key}, ... } }` mapping `start()` binds from
+    --- `config.keys`.
     function powerWindows:defaultHotkeys()
         local mapping = {}
         local function add(chords, mods)
@@ -24,24 +25,33 @@ return function(powerWindows, actions)
 
     local function bind(self, mapping, into)
         for action, chordOrChords in pairs(mapping) do
-            assert(actions[action], "PowerWindows: unknown action " .. tostring(action))
-            local chords = type(chordOrChords[2]) == "string" and { chordOrChords } or chordOrChords
+            assert(
+                actions[action],
+                "PowerWindows: unknown action " .. tostring(action)
+            )
+            local chords = type(chordOrChords[2]) == "string"
+                and { chordOrChords } or chordOrChords
             for _, chord in ipairs(chords) do
-                table.insert(into, hs.hotkey.bind(chord[1], chord[2], function() self[action](self) end))
+                table.insert(into, hs.hotkey.bind(
+                    chord[1], chord[2], function() self[action](self) end
+                ))
             end
         end
     end
 
     --- PowerWindows:bindHotkeys(mapping) -> self
     --- Method
-    --- Binds `{ action = {mods, key} }` or a list of chords per action; `stop()` pauses them, `start()` resumes.
+    --- Binds `{ action = {mods, key} }` or a list of chords per action;
+    --- `stop()` pauses them, `start()` resumes.
     function powerWindows:bindHotkeys(mapping)
         bind(self, mapping, userHotkeys)
         return self
     end
 
     function powerWindows:_startHotkeys()
-        if self.config.hotkeys then bind(self, self:defaultHotkeys(), defaultHotkeys) end
+        if self.config.hotkeys then
+            bind(self, self:defaultHotkeys(), defaultHotkeys)
+        end
         for _, hotkey in ipairs(userHotkeys) do hotkey:enable() end
     end
 

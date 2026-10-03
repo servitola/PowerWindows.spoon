@@ -1,5 +1,6 @@
--- Small windows that are dialogs: they go to the top right corner, not to their app's slot.
--- A window matching any line is a dialog. Add a line: { bundle ID or "*" for any app, conditions }.
+-- Small windows that are dialogs: they go to the top right corner, not to their
+-- app's slot. A window matching any line is a dialog. Add a line:
+-- { bundle ID or "*" for any app, conditions }.
 --   title / notTitle   Lua pattern the title must / must not match
 --   maxSize            { width, height }: the window is strictly smaller
 --   maxTitle           the title is at most this many characters

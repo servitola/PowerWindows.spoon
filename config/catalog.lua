@@ -30,7 +30,8 @@ return {
         "com.servitola.polaska",
     },
 
-    -- The picture-in-picture window goes to the corner; the browser itself stays in the main area.
+    -- The picture-in-picture window goes to the corner; the browser itself
+    -- stays in the main area.
     chromiumBrowsers = {
         "com.google.Chrome",
         "com.vivaldi.Vivaldi",
@@ -45,14 +46,23 @@ return {
         "app.zen-browser.zen",
     },
 
-    -- Everything the lists above cannot say: { bundle or "*", slot, fields }, fields in docs/apps.md.
+    -- Everything the lists above cannot say: { bundle or "*", slot, fields },
+    -- fields in docs/apps.md.
     special = {
-        { "com.apple.Music",           "corner", title = "^Mini Player$", sample = "Mini Player" },
-        { "com.sertacozercan.Kaset",   "corner", identifier = "youtubeContent.videoWindow", keepAspect = true, popup = true },
-        { "com.apple.iphonesimulator", "stack", keepAspect = true, device = true },
-        { "*",                         "stack", title = "^Android Emulator", sample = "Android Emulator - Pixel_8:5554" },
-        { "com.apple.ActivityMonitor", "corner", title = "^CPU History$", sample = "CPU History" },
-        { "com.apple.ActivityMonitor", "corner", title = "^GPU History$", sample = "GPU History" },
+        { "com.apple.Music",           "corner",
+            title = "^Mini Player$", sample = "Mini Player" },
+        { "com.sertacozercan.Kaset",   "corner",
+            identifier = "youtubeContent.videoWindow", keepAspect = true,
+            popup = true },
+        { "com.apple.iphonesimulator", "stack",
+            keepAspect = true, device = true },
+        { "*",                         "stack",
+            title = "^Android Emulator",
+            sample = "Android Emulator - Pixel_8:5554" },
+        { "com.apple.ActivityMonitor", "corner",
+            title = "^CPU History$", sample = "CPU History" },
+        { "com.apple.ActivityMonitor", "corner",
+            title = "^GPU History$", sample = "GPU History" },
         { "com.apple.ActivityMonitor", "corner", maxSize = { 600, 400 } },
     },
 }
