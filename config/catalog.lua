@@ -1,71 +1,57 @@
--- { bundle or "*", slot or false, title = pattern, notTitle = pattern, maxTitle = chars,
---   maxSize = { w, h } (strictly less), keepAspect, device, popup, sample = a title the pattern matches (tests) }
--- Unlisted apps go to main. First match wins: title/size entries above the plain one.
--- popup = floats over its app (PiP); focus sets keep it and minimize the app's other windows.
-local catalog = {}
+-- Add an app: put its bundle ID into the list that says where its windows go.
+-- Bundle ID: osascript -e 'id of app "Telegram"'
+return {
+    -- Right column.
+    side = {
+        "ru.keepcoder.Telegram",
+        "com.tdesktop.Telegram",
+        "one.ayugram.AyuGramDesktop",
+        "net.whatsapp.WhatsApp",
+        "org.whispersystems.signal-desktop",
+        "com.tinyspeck.slackmacgap",
+        "com.hnc.Discord",
+        "com.apple.MobileSMS",
+        "com.microsoft.teams2",
+        "im.riot.app",
+        "com.viber.osx",
+    },
 
-local CHROMIUM_PLAYER = { title = "^Picture in Picture$", sample = "Picture in Picture" }
-local GECKO_PLAYER = { title = "^Picture%-in%-Picture$", sample = "Picture-in-Picture" }
+    -- Corner under the right column, proportions kept.
+    players = {
+        "com.colliderli.iina",
+        "org.videolan.vlc",
+    },
 
-local function pictureInPicture(bundle, player)
-    return { bundle, "corner", title = player.title, sample = player.sample, keepAspect = true, popup = true }
-end
+    -- Never moved automatically.
+    leaveAlone = {
+        "com.raycast.macos",
+        "com.runningwithcrayons.Alfred",
+        "theboringteam.boringnotch",
+        "com.servitola.polaska",
+    },
 
-catalog.apps = {
-    { "ru.keepcoder.Telegram",             "side" },
-    { "com.tdesktop.Telegram",             "side" },
-    { "one.ayugram.AyuGramDesktop",        "side" },
-    { "net.whatsapp.WhatsApp",             "side" },
-    { "org.whispersystems.signal-desktop", "side" },
-    { "com.tinyspeck.slackmacgap",         "side" },
-    { "com.hnc.Discord",                   "side" },
-    { "com.apple.MobileSMS",               "side" },
-    { "com.microsoft.teams2",              "side" },
-    { "im.riot.app",                       "side" },
-    { "com.viber.osx",                     "side" },
+    -- The picture-in-picture window goes to the corner; the browser itself stays in the main area.
+    chromiumBrowsers = {
+        "com.google.Chrome",
+        "com.vivaldi.Vivaldi",
+        "com.microsoft.edgemac",
+        "com.operasoftware.Opera",
+        "com.brave.Browser",
+        "company.thebrowser.Browser",
+        "ru.yandex.desktop.yandex-browser",
+    },
+    geckoBrowsers = {
+        "org.mozilla.firefox",
+        "app.zen-browser.zen",
+    },
 
-    { "com.colliderli.iina",               "corner", keepAspect = true },
-    { "org.videolan.vlc",                  "corner", keepAspect = true },
-    { "com.apple.Music",                   "corner", title = "^Mini Player$", sample = "Mini Player" },
-
-    pictureInPicture("com.google.Chrome", CHROMIUM_PLAYER),
-    pictureInPicture("com.vivaldi.Vivaldi", CHROMIUM_PLAYER),
-    pictureInPicture("com.microsoft.edgemac", CHROMIUM_PLAYER),
-    pictureInPicture("com.operasoftware.Opera", CHROMIUM_PLAYER),
-    pictureInPicture("com.brave.Browser", CHROMIUM_PLAYER),
-    pictureInPicture("company.thebrowser.Browser", CHROMIUM_PLAYER),
-    pictureInPicture("ru.yandex.desktop.yandex-browser", CHROMIUM_PLAYER),
-    pictureInPicture("org.mozilla.firefox", GECKO_PLAYER),
-    pictureInPicture("app.zen-browser.zen", GECKO_PLAYER),
-
-    { "com.apple.iphonesimulator",         "stack", keepAspect = true, device = true },
-    { "*",                                 "stack", title = "^Android Emulator", sample = "Android Emulator - Pixel_8:5554" },
-
-    { "com.apple.ActivityMonitor",         "corner", title = "^CPU History$", sample = "CPU History" },
-    { "com.apple.ActivityMonitor",         "corner", title = "^GPU History$", sample = "GPU History" },
-    { "com.apple.ActivityMonitor",         "corner", maxSize = { 600, 400 } },
-
-    { "com.raycast.macos",                 false },
-    { "com.runningwithcrayons.Alfred",     false },
-    -- Notch overlay: moving it leaves a black bar on screen.
-    { "theboringteam.boringnotch",         false },
-    { "com.servitola.polaska",             false }, -- tab strip pinned under the browser window
+    -- Everything the lists above cannot say: { bundle or "*", slot, fields }, fields in docs/apps.md.
+    special = {
+        { "com.apple.Music",           "corner", title = "^Mini Player$", sample = "Mini Player" },
+        { "com.apple.iphonesimulator", "stack", keepAspect = true, device = true },
+        { "*",                         "stack", title = "^Android Emulator", sample = "Android Emulator - Pixel_8:5554" },
+        { "com.apple.ActivityMonitor", "corner", title = "^CPU History$", sample = "CPU History" },
+        { "com.apple.ActivityMonitor", "corner", title = "^GPU History$", sample = "GPU History" },
+        { "com.apple.ActivityMonitor", "corner", maxSize = { 600, 400 } },
+    },
 }
-
--- Gecko browser.xhtml key_togglePictureInPicture; Chromium has no default PiP chord.
-local GECKO_PLAYER_CHORD = { mods = { "cmd", "alt", "shift" }, key = "]" }
-
-catalog.pipChords = {
-    ["org.mozilla.firefox"] = GECKO_PLAYER_CHORD,
-    ["app.zen-browser.zen"] = GECKO_PLAYER_CHORD,
-}
-
-function catalog.popupBundles()
-    local set = {}
-    for _, entry in ipairs(catalog.apps) do
-        if entry.popup then set[entry[1]] = true end
-    end
-    return set
-end
-
-return catalog

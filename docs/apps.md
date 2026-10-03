@@ -20,11 +20,26 @@ osascript -e 'id of app "Telegram"'
 
 ## Catalog
 
-[`config/catalog.lua`](../config/catalog.lua): messengers → `side`, players and picture-in-picture → `corner`, simulators → `stack`, launchers and overlays → `false`.
-First match wins: title and size entries above the plain one.
+[`config/catalog.lua`](../config/catalog.lua): one list per destination. Add a bundle ID to the list that fits:
+
+| List | Windows go |
+|---|---|
+| `side` | right column |
+| `players` | `corner`, proportions kept |
+| `leaveAlone` | nowhere: never placed automatically; a chord still moves them |
+| `chromiumBrowsers` / `geckoBrowsers` | picture-in-picture window → `corner` |
+| `special` | full entries, for one kind of window told by title or size |
 
 ```lua
-{ "com.example.Chat", "side" },
+side = {
+    "com.example.Chat",
+},
+```
+
+A `special` entry; they are checked before the lists, first match wins:
+
+```lua
+{ "com.apple.Music", "corner", title = "^Mini Player$", sample = "Mini Player" },
 ```
 
 | Field | Meaning |

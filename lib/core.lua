@@ -8,7 +8,7 @@ return function(config)
         geometry = load("geometry"),
         rules = load("rules"),
         settings = load("settings"),
-        catalog = config.catalog,
+        catalog = load("catalog")(config.catalog),
         dialogs = config.dialogs,
         defaults = config.settings,
     }

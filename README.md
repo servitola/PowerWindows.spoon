@@ -87,7 +87,7 @@ No folder holds more than seven entries.
 ```
 init.lua       the contract: public API, config files handed to the layers
 config/        settings, catalog, dialogs: yours to edit
-lib/core/      geometry, rules, settings (pure Lua, no Hammerspoon)
+lib/core/      geometry, rules, settings, catalog (pure Lua, no Hammerspoon)
 lib/window/    place, stack, actions, minimize, query, timers
 lib/features/  hotkeys, globe, focus, screens, launch
 lib/core.lua   assembles the core from the config
