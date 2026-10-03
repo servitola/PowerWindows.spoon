@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 — 2026-10-03
+
+- A chord pressed again does nothing. `cycle = true` restores the second option: left half, right half, native fullscreen. See [keys.md](keys.md).
+- `config/catalog.lua` is lists of bundle IDs, one per destination.
+- Catalog entries match by `identifier` (`AXIdentifier`). Kaset's video window goes to the corner.
+- A window larger than its slot stays on the screen.
+- A `rule`, a focus-set handler or a skip predicate that raises is printed to the console and no longer stops the pass.
+- `start()` validates override slots; switches such as `cycle` accept only `true` or `false`.
+- The README ends at install; everything optional is in [options.md](options.md).
+- Three layers: `init.lua` hands `config/` to `lib/core.lua`; `lib/domain.lua` builds on it.
+- Tests live outside this repository.
+
 ## 0.2.0 — 2026-09-30
 
 - Moves: one AX write per property instead of `setFrame`'s three, for every move (fit, center, stack too): fewer repaints. `animation` `0.05`; `0` = one move.

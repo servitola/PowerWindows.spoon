@@ -4,7 +4,7 @@
 local powerWindows = {}
 
 powerWindows.name = "PowerWindows"
-powerWindows.version = "0.2.0"
+powerWindows.version = "0.3.0"
 powerWindows.author = "servitola"
 powerWindows.homepage = "https://github.com/servitola/PowerWindows.spoon"
 powerWindows.license = "MIT - https://opensource.org/licenses/MIT"
