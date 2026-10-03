@@ -11,7 +11,7 @@ return function(powerWindows, geometry, query)
                 function() self[moveAction](self, window) end
             )
         end
-        if self:_isAt(window, homeSlot) then
+        if self.config.cycle and self:_isAt(window, homeSlot) then
             self[halfAction](self, window)
         else
             self[moveAction](self, window)
@@ -20,27 +20,28 @@ return function(powerWindows, geometry, query)
 
     --- PowerWindows:left([window])
     --- Method
-    --- Left column; again (already there) = left half. Leaves native
-    --- fullscreen first.
+    --- Left column; with `cycle`, again (already there) = left half. Leaves
+    --- native fullscreen first.
     function powerWindows:left(window)
         return toggleSide(self, window, "main", "halfLeft", "moveLeft")
     end
 
     --- PowerWindows:right([window])
     --- Method
-    --- Right column; again = right half. Leaves native fullscreen first.
+    --- Right column; with `cycle`, again = right half. Leaves native
+    --- fullscreen first.
     function powerWindows:right(window)
         return toggleSide(self, window, "side", "halfRight", "moveRight")
     end
 
     --- PowerWindows:fullscreen([window])
     --- Method
-    --- Whole screen with gaps; again = native fullscreen.
+    --- Whole screen with gaps; with `cycle`, again = native fullscreen.
     function powerWindows:fullscreen(window)
         window = window or query.focused()
         if not window then return end
         if window:isFullScreen() then return end
-        if self:_isAt(window, "full") then
+        if self.config.cycle and self:_isAt(window, "full") then
             window:setFullScreen(true)
         else
             self:moveFull(window)

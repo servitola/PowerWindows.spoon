@@ -6,7 +6,7 @@ Every chord and action, and how to change them.
 
 Bound by `start()`.
 
-| Chord | Action | Press again |
+| Chord | Action | Press again, with `cycle` |
 |---|---|---|
 | `⌃⌥←` `⌃⌥A` | `left`: to `main` | left half |
 | `⌃⌥→` `⌃⌥D` | `right`: to `side` | right half |
@@ -17,7 +17,11 @@ Bound by `start()`.
 | `⇧⌃⌥↑` `⇧⌃⌥W` | `top60` | — |
 | `⇧⌃⌥↓` `⇧⌃⌥S` | `bottom40` | — |
 
-"Press again" = the window already sits in that slot, within `tolerance`. A third press returns.
+Pressing again does nothing by default: one chord, one place. `cycle = true` turns the second option on: the window already sits in that slot, within `tolerance`. A third press of `left` or `right` returns to the column; native fullscreen is left by `left`, `right` or `arrangeAll`.
+
+```lua
+spoon.PowerWindows:configure{ cycle = true }:start()
+```
 
 ## Actions without a chord
 

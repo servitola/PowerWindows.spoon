@@ -37,7 +37,7 @@ Fractions are shares of the screen: `0.73` = 73%.
 | `sideHeight` | `0.70` | where `side` ends and `corner` begins |
 | `topShare` | `0.60` | line between `top60` and `bottom40` |
 | `animation` | `0.05` | seconds per move; `0` = one move, no motion |
-| `tolerance` | `4` | points; this close to a slot = placed, the next press cycles. Terminal may fall one text cell short |
+| `tolerance` | `4` | points; this close to a slot = placed; with `cycle`, the next press takes the second option. Terminal may fall one text cell short |
 
 ### Gaps
 

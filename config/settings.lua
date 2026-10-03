@@ -2,6 +2,9 @@
 return {
     hotkeys = true,
     wasd = true,          -- false = arrows only
+    -- true = a chord pressed again, the window already there, gives the second
+    -- option: left and right the half, fullscreen the native one
+    cycle = false,
     keys = {
         mods = { "ctrl", "alt" },
         shiftMods = { "shift", "ctrl", "alt" },
@@ -63,7 +66,7 @@ return {
         height = 0.4,     -- max, share of sideHeight
     },
 
-    -- points; this close to a slot = already in it (second press cycles)
+    -- points; this close to a slot = already in it (see cycle)
     tolerance = 4,
 
     experimental = {

@@ -1,18 +1,18 @@
 # PowerWindows.spoon
 I never move windows with my mouse.
 Forget that windows can be dragged.
-Every window already knows its place. Need it elsewhere: one key. Press again: the second option.
+Every window already knows its place. Need it elsewhere: one key.
 
 ![demo](docs/demo.gif)
 
-| Key | Once | Again |
-|---|---|---|
-| `⌃⌥←` | left column | left half |
-| `⌃⌥→` | right column | right half |
-| `⌃⌥↑` | whole screen | native fullscreen |
-| `⌃⌥↓` | every window back to its place | |
+| Key | Window goes to |
+|---|---|
+| `⌃⌥←` | left column |
+| `⌃⌥→` | right column |
+| `⌃⌥↑` | whole screen |
+| `⌃⌥↓` | its place, and every other window to its own |
 
-Also on: `⌃⌥WASD` = the arrows, `⇧` for halves and 60/40.
+Also on: `⌃⌥WASD` = the arrows, `⇧` for halves and 60/40. Off until asked for: `cycle = true`, where a key pressed again gives the second option (left half, right half, native fullscreen).
 
 ## Install
 

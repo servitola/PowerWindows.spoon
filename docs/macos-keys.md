@@ -32,11 +32,11 @@ spoon.PowerWindows:configure{
 
 | Keys | Action | Result |
 |---|---|---|
-| `🌐⌃←` | `left` | to `main`; again: left half |
-| `🌐⌃→` | `right` | to `side`; again: right half |
+| `🌐⌃←` | `left` | to `main`; with `cycle`, again: left half |
+| `🌐⌃→` | `right` | to `side`; with `cycle`, again: right half |
 | `🌐⌃↑` | `top60` | upper part, full width |
 | `🌐⌃↓` | `bottom40` | lower part, full width |
-| `🌐⌃F` | `fullscreen` | whole screen with gaps; again: native fullscreen |
+| `🌐⌃F` | `fullscreen` | whole screen with gaps; with `cycle`, again: native fullscreen |
 | `🌐⌃C` | `center` | centered, size kept |
 
 Just some:
