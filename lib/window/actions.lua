@@ -2,73 +2,75 @@
 local AFTER_FULLSCREEN = 0.1
 
 return function(powerWindows, geometry, query)
-    local withWindow = query.withWindow
-
-    local function toggleSide(homeSlot, halfAction, moveAction)
-        return withWindow(function(self, window)
-            if window:isFullScreen() then
-                return self:_leaveFullscreenThen(window, AFTER_FULLSCREEN, function() self[moveAction](self, window) end)
-            end
-            if self:_isAt(window, homeSlot) then self[halfAction](self, window) else self[moveAction](self, window) end
-        end)
+    local function toggleSide(self, window, homeSlot, halfAction, moveAction)
+        window = window or query.focused()
+        if not window then return end
+        if window:isFullScreen() then
+            return self:_leaveFullscreenThen(window, AFTER_FULLSCREEN, function() self[moveAction](self, window) end)
+        end
+        if self:_isAt(window, homeSlot) then self[halfAction](self, window) else self[moveAction](self, window) end
     end
 
     --- PowerWindows:left([window])
     --- Method
     --- Left column; again (already there) = left half. Leaves native fullscreen first.
-    powerWindows.left = toggleSide("main", "halfLeft", "moveLeft")
+    function powerWindows:left(window) return toggleSide(self, window, "main", "halfLeft", "moveLeft") end
 
     --- PowerWindows:right([window])
     --- Method
     --- Right column; again = right half. Leaves native fullscreen first.
-    powerWindows.right = toggleSide("side", "halfRight", "moveRight")
+    function powerWindows:right(window) return toggleSide(self, window, "side", "halfRight", "moveRight") end
 
     --- PowerWindows:fullscreen([window])
     --- Method
     --- Whole screen with gaps; again = native fullscreen.
-    powerWindows.fullscreen = withWindow(function(self, window)
+    function powerWindows:fullscreen(window)
+        window = window or query.focused()
+        if not window then return end
         if window:isFullScreen() then return end
         if self:_isAt(window, "full") then window:setFullScreen(true) else self:moveFull(window) end
-    end)
+    end
 
-    local function simpleMove(area)
-        return withWindow(function(self, window)
-            local config, screenFrame = self:_screenLayoutOf(window)
-            if screenFrame then self:_set(window, geometry.rect(config, area, screenFrame)) end
-        end)
+    local function simpleMove(self, window, area)
+        window = window or query.focused()
+        if not window then return end
+        local config, screenFrame = self:_screenLayoutOf(window)
+        if screenFrame then self:_set(window, geometry.rect(config, area, screenFrame)) end
     end
 
     --- PowerWindows:halfLeft([window])
     --- Method
     --- Left half of the screen.
-    powerWindows.halfLeft = simpleMove("halfLeft")
+    function powerWindows:halfLeft(window) return simpleMove(self, window, "halfLeft") end
 
     --- PowerWindows:halfRight([window])
     --- Method
     --- Right half of the screen.
-    powerWindows.halfRight = simpleMove("halfRight")
+    function powerWindows:halfRight(window) return simpleMove(self, window, "halfRight") end
 
     --- PowerWindows:top60([window])
     --- Method
     --- Top part, `topShare` of the height.
-    powerWindows.top60 = simpleMove("top60")
+    function powerWindows:top60(window) return simpleMove(self, window, "top60") end
 
     --- PowerWindows:bottom40([window])
     --- Method
     --- Bottom part, below `topShare`.
-    powerWindows.bottom40 = simpleMove("bottom40")
+    function powerWindows:bottom40(window) return simpleMove(self, window, "bottom40") end
 
     --- PowerWindows:center([window])
     --- Method
     --- Centers the window, size kept.
-    powerWindows.center = withWindow(function(self, window)
+    function powerWindows:center(window)
+        window = window or query.focused()
+        if not window then return end
         local _, screenFrame = self:_screenLayoutOf(window)
         if not screenFrame then return end
         local frame = window:frame()
         frame.x = screenFrame.x + (screenFrame.w - frame.w) / 2
         frame.y = screenFrame.y + (screenFrame.h - frame.h) / 2
         self:_write(window, frame)
-    end)
+    end
 
     --- PowerWindows:arrangeAll()
     --- Method

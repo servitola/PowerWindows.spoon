@@ -2,7 +2,9 @@
 local SETTLE = 1
 
 return function(powerWindows, geometry, rules, query)
-    local moveWindowToScreen = query.withWindow(function(self, window, target)
+    local function moveWindowToScreen(self, window, target)
+        window = window or query.focused()
+        if not window then return end
         if window:isFullScreen() then return end
         local from = window:screen()
         if not from then return end
@@ -21,7 +23,7 @@ return function(powerWindows, geometry, rules, query)
         self:_write(window, { x = column.x, y = column.y, w = frame.w, h = frame.h })
         self:_placeStack(to)
         self:_placeStack(from)
-    end)
+    end
 
     --- PowerWindows:moveToScreen(target[, window])
     --- Method

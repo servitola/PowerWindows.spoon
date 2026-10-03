@@ -3,14 +3,6 @@ return function(powerWindows, settings)
 
     function query.focused() return hs.window.focusedWindow() end
 
-    function query.withWindow(body, whenNone)
-        return function(self, window, ...)
-            window = window or query.focused()
-            if not window then return whenNone end
-            return body(self, window, ...)
-        end
-    end
-
     function query.isOnScreen(window, screen)
         local own = window:screen()
         return own ~= nil and own:id() == screen:id()
@@ -44,10 +36,12 @@ return function(powerWindows, settings)
     --- PowerWindows:isDecoration([window]) -> boolean
     --- Method
     --- True for never-touched windows and fitted corner video (PiP); swaps and focus-next skip them.
-    powerWindows.isDecoration = query.withWindow(function(self, window)
+    function powerWindows:isDecoration(window)
+        window = window or query.focused()
+        if not window then return false end
         local resolved = self:resolve(window)
         return resolved == false or (resolved.slot == "corner" and resolved.keepAspect == true)
-    end, false)
+    end
 
     function powerWindows:_isCandidate(window)
         return window:isStandard() and window:isVisible() and not self:isDecoration(window)

@@ -67,10 +67,11 @@ end
 --- PowerWindows:resolve([window]) -> table or false
 --- Method
 --- `{ slot, source, keepAspect, device, popup }` for `window` (default: focused), or false.
-powerWindows.resolve = domain.query.withWindow(function(self, window)
-    if not window:application() then return false end
+function powerWindows:resolve(window)
+    window = window or domain.query.focused()
+    if not window or not window:application() then return false end
     return core.rules.resolve(self.config, core.catalog.apps, core.dialogs, domain.query.info(window), window)
-end, false)
+end
 
 --- PowerWindows:slotRect(name[, screen]) -> rect
 --- Method

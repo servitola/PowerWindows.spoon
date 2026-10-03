@@ -52,8 +52,6 @@ local function write(window, rect, correct)
 end
 
 return function(powerWindows, geometry, query)
-    local withWindow = query.withWindow
-
     local function moveKey(window) return "move:" .. tostring(window:id()) end
 
     -- Every direct write first stops a running animation, or its next step drags the window back.
@@ -133,36 +131,44 @@ return function(powerWindows, geometry, query)
     --- PowerWindows:placeDefault([window])
     --- Method
     --- Puts `window` (default: focused) in its slot; a stack window re-lays the column.
-    powerWindows.placeDefault = withWindow(function(self, window)
+    function powerWindows:placeDefault(window)
+        window = window or query.focused()
+        if not window then return end
         local resolved = self:resolve(window)
         if not resolved then return end
         if resolved.slot == "stack" then return restackColumnOf(self, window) end
         self:_place(window, resolved)
-    end)
+    end
 
     --- PowerWindows:moveLeft([window])
     --- Method
     --- Puts `window` (default: focused) into the big left slot.
-    powerWindows.moveLeft = withWindow(function(self, window)
+    function powerWindows:moveLeft(window)
+        window = window or query.focused()
+        if not window then return end
         self:_place(window, self:_resolveOr(window, "main"), "main")
-    end)
+    end
 
     --- PowerWindows:moveRight([window])
     --- Method
     --- Puts `window` (default: focused) into the right column; corner and dialog keep their slot, a stack window re-lays the column.
-    powerWindows.moveRight = withWindow(function(self, window)
+    function powerWindows:moveRight(window)
+        window = window or query.focused()
+        if not window then return end
         local resolved = self:_resolveOr(window, "side")
         if resolved.slot == "stack" then return restackColumnOf(self, window) end
         local slot = (resolved.slot == "corner" or resolved.slot == "dialog") and resolved.slot or "side"
         self:_place(window, resolved, slot)
-    end)
+    end
 
     --- PowerWindows:moveFull([window])
     --- Method
     --- Stretches `window` (default: focused) over the screen with gaps; not native fullscreen.
-    powerWindows.moveFull = withWindow(function(self, window)
+    function powerWindows:moveFull(window)
+        window = window or query.focused()
+        if not window then return end
         self:_place(window, self:_resolveOr(window, "main"), "full")
-    end)
+    end
 
     function powerWindows:_isAt(window, area)
         local config, screenFrame = self:_screenLayoutOf(window)
