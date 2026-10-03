@@ -1,3 +1,5 @@
+local axuielement = require("hs.axuielement")
+
 return function(powerWindows, settings)
     local query = {}
 
@@ -21,8 +23,10 @@ return function(powerWindows, settings)
     function query.info(window)
         local app = window:application()
         local frame = window:frame()
+        local element = axuielement.windowElement(window)
         return { bundle = app and app:bundleID(), app = app and app:title() or "",
-                 title = window:title() or "", w = frame.w, h = frame.h }
+                 title = window:title() or "", w = frame.w, h = frame.h,
+                 identifier = element and element:attributeValue("AXIdentifier") }
     end
 
     function powerWindows:_skipped(window)

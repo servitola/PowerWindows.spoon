@@ -48,6 +48,7 @@ return {
     -- Everything the lists above cannot say: { bundle or "*", slot, fields }, fields in docs/apps.md.
     special = {
         { "com.apple.Music",           "corner", title = "^Mini Player$", sample = "Mini Player" },
+        { "com.sertacozercan.Kaset",   "corner", identifier = "youtubeContent.videoWindow", keepAspect = true, popup = true },
         { "com.apple.iphonesimulator", "stack", keepAspect = true, device = true },
         { "*",                         "stack", title = "^Android Emulator", sample = "Android Emulator - Pixel_8:5554" },
         { "com.apple.ActivityMonitor", "corner", title = "^CPU History$", sample = "CPU History" },

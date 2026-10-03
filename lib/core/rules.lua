@@ -17,6 +17,7 @@ end
 
 local function matches(entry, info)
     if entry[1] ~= "*" and entry[1] ~= info.bundle then return false end
+    if entry.identifier and entry.identifier ~= info.identifier then return false end
     if entry.title and not info.title:find(entry.title) then return false end
     if entry.notTitle and info.title:find(entry.notTitle) then return false end
     if entry.maxTitle and #info.title > entry.maxTitle then return false end

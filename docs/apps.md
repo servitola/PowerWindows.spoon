@@ -47,6 +47,7 @@ A `special` entry; they are checked before the lists, first match wins:
 | `[1]` | bundle ID, or `"*"` |
 | `[2]` | slot, or `false` = never placed automatically; a chord still moves it |
 | `title` / `notTitle` | Lua pattern the title must / must not match |
+| `identifier` | the window's accessibility identifier (`AXIdentifier`), exact; for windows whose title changes |
 | `sample` | a title that `title` matches; the tests check it |
 | `maxTitle` | title at most this many characters |
 | `maxSize` | `{ w, h }`: window strictly smaller |
@@ -97,7 +98,7 @@ Small Save, Open, Export, Print, Copy windows go to the top right corner. List: 
 
 ## Rule
 
-Runs first for every window. `info` = `{ bundle, app, title, w, h }`. Return a slot, `false`, a table, or `nil` to fall through.
+Runs first for every window. `info` = `{ bundle, app, title, w, h, identifier }`. Return a slot, `false`, a table, or `nil` to fall through.
 
 ```lua
 spoon.PowerWindows:configure{
