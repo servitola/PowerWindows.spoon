@@ -143,6 +143,20 @@ function geometry.smallDialog(config, screenFrame, current)
     }
 end
 
+-- Where a frame of this size goes to lie inside the area; the top left corner
+-- wins when it is larger than the area.
+function geometry.inside(frame, area)
+    return {
+        x = math.max(area.x, math.min(frame.x, area.x + area.w - frame.w)),
+        y = math.max(area.y, math.min(frame.y, area.y + area.h - frame.h)),
+    }
+end
+
+function geometry.contains(area, point)
+    return point.x >= area.x and point.x < area.x + area.w
+        and point.y >= area.y and point.y < area.y + area.h
+end
+
 function geometry.near(first, second, tolerance)
     return math.abs(first.x - second.x) <= tolerance
         and math.abs(first.y - second.y) <= tolerance

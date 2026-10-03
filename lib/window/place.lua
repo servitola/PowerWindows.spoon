@@ -72,11 +72,30 @@ end
 return function(powerWindows, geometry, query)
     local function moveKey(window) return "move:" .. tostring(window:id()) end
 
+    -- An app that refuses the size (its minimum is larger) hangs over the
+    -- screen edge in the right column: the last write of a move pulls it back.
+    local function settle(window, rect)
+        write(window, rect)
+        local frame = window:frame()
+        if frame.w <= rect.w + CLAMP_TOLERANCE
+            and frame.h <= rect.h + CLAMP_TOLERANCE then
+            return
+        end
+        for _, screen in ipairs(hs.screen.allScreens()) do
+            if geometry.contains(screen:fullFrame(), rect) then
+                local inside = geometry.inside(frame, screen:frame())
+                return write(window, {
+                    x = inside.x, y = inside.y, w = frame.w, h = frame.h,
+                }, false)
+            end
+        end
+    end
+
     -- Every direct write first stops a running animation, or its next step
     -- drags the window back.
     function powerWindows:_write(window, rect)
         self:_cancel(moveKey(window))
-        write(window, rect)
+        settle(window, rect)
     end
 
     -- Time-based, so a slow app drops steps instead of stretching the move;
@@ -88,7 +107,7 @@ return function(powerWindows, geometry, query)
         local from = window:frame()
         if geometry.near(from, rect, SAME_SIZE_TOLERANCE) then return end
         local duration = self.config.animation
-        if duration <= 0 then return write(window, rect) end
+        if duration <= 0 then return settle(window, rect) end
         local start = hs.timer.secondsSinceEpoch()
         self:_every(ANIMATION_FRAME, function()
             local progress = math.min(
@@ -96,7 +115,7 @@ return function(powerWindows, geometry, query)
             )
             local eased = 1 - (1 - progress) ^ 3
             if progress >= 1 then
-                write(window, rect)
+                settle(window, rect)
                 return true
             end
             write(window, {
