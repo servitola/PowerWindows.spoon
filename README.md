@@ -1,4 +1,5 @@
 # PowerWindows.spoon
+I never move windows with my mouse.
 Forget that windows can be dragged.
 Every window already knows its place. Need it elsewhere: one key. Press again: the second option.
 
