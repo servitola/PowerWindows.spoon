@@ -94,10 +94,19 @@ local OPEN_MAPS = {
     overrides = true, screens = true, focusSets = true, experimental = true,
 }
 
+local SWITCHES = {
+    hotkeys = true, wasd = true, cycle = true, catalog = true, dialogs = true,
+    rearrangeOnScreenChange = true,
+}
+
 local function checkValue(current, value, path, name)
     if current == nil then return unknown(path) end
     if type(current) == "number" and type(value) ~= "number" then
         return "setting '" .. path .. "' must be a number"
+    end
+    -- 0 is true in Lua: `cycle = 0` would turn it on.
+    if SWITCHES[name] and type(value) ~= "boolean" then
+        return "setting '" .. path .. "' must be true or false"
     end
     if (CLOSED_MAPS[name] or OPEN_MAPS[name]) and not isMap(value) then
         return "setting '" .. path .. "' must be a table"

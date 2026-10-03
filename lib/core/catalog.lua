@@ -16,7 +16,7 @@ local function pictureInPicture(bundle, player)
 end
 
 return function(lists)
-    local catalog = { apps = {}, pipChords = {} }
+    local catalog = { apps = {}, pictureInPictureChords = {} }
     local function add(entry) catalog.apps[#catalog.apps + 1] = entry end
 
     -- First match wins: entries told by title or size go before the plain ones.
@@ -26,7 +26,7 @@ return function(lists)
     end
     for _, bundle in ipairs(lists.geckoBrowsers) do
         add(pictureInPicture(bundle, GECKO_PLAYER))
-        catalog.pipChords[bundle] = GECKO_PLAYER_CHORD
+        catalog.pictureInPictureChords[bundle] = GECKO_PLAYER_CHORD
     end
     for _, bundle in ipairs(lists.side) do add({ bundle, "side" }) end
     for _, bundle in ipairs(lists.players) do

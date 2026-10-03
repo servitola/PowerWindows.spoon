@@ -16,7 +16,7 @@ return {
         "com.viber.osx",
     },
 
-    -- Corner under the right column, proportions kept.
+    -- Corner of the right column, under `side`; proportions kept.
     players = {
         "com.colliderli.iina",
         "org.videolan.vlc",
@@ -47,7 +47,8 @@ return {
     },
 
     -- Everything the lists above cannot say: { bundle or "*", slot, fields },
-    -- fields in docs/apps.md.
+    -- fields in docs/apps.md. Checked before the lists, top to bottom: the
+    -- first match wins.
     special = {
         { "com.apple.Music",           "corner",
             title = "^Mini Player$", sample = "Mini Player" },

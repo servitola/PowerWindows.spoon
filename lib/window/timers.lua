@@ -19,6 +19,12 @@ return function(powerWindows)
         end
     end
 
+    function powerWindows:_cancelAll()
+        for timer in pairs(pending) do timer:stop() end
+        for _, timer in pairs(keyed) do timer:stop() end
+        pending, keyed = {}, {}
+    end
+
     function powerWindows:_cancel(key)
         local timer = keyed[key]
         if timer then

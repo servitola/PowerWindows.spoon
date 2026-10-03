@@ -7,9 +7,9 @@ return function(powerWindows, settings)
             self.config.macosKeys, settings.ACTIONS, hs.keycodes.map
         )
         if not byCode then return end
-        local run = {}
+        local actionByCode = {}
         for code, action in pairs(byCode) do
-            run[code] = function() self[action](self) end
+            actionByCode[code] = function() self[action](self) end
         end
         local types = hs.eventtap.event.types
         local keyDown = types.keyDown
@@ -25,7 +25,9 @@ return function(powerWindows, settings)
                 globeDown = event:getFlags().fn == true
                 return false
             end
-            if not run[code] or event:getType() ~= keyDown then return false end
+            if not actionByCode[code] or event:getType() ~= keyDown then
+                return false
+            end
             local flags = event:getFlags()
             if not (flags.fn and flags.ctrl)
                 or flags.cmd or flags.alt or flags.shift then
@@ -35,7 +37,7 @@ return function(powerWindows, settings)
             if event:getProperty(autorepeat) == 0 then
                 -- Off the tap callback: a slow AX call there gets the tap
                 -- disabled by timeout.
-                self:_after(0, run[code], "globe")
+                self:_after(0, actionByCode[code], "globe")
             end
             return true
         end):start()

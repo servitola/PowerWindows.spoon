@@ -1,5 +1,5 @@
 return function(powerWindows, actions)
-    local defaultHotkeys, userHotkeys = {}, {}
+    local boundDefaults, boundByUser = {}, {}
 
     --- PowerWindows:defaultHotkeys() -> table
     --- Method
@@ -44,20 +44,20 @@ return function(powerWindows, actions)
     --- Binds `{ action = {mods, key} }` or a list of chords per action;
     --- `stop()` pauses them, `start()` resumes.
     function powerWindows:bindHotkeys(mapping)
-        bind(self, mapping, userHotkeys)
+        bind(self, mapping, boundByUser)
         return self
     end
 
     function powerWindows:_startHotkeys()
         if self.config.hotkeys then
-            bind(self, self:defaultHotkeys(), defaultHotkeys)
+            bind(self, self:defaultHotkeys(), boundDefaults)
         end
-        for _, hotkey in ipairs(userHotkeys) do hotkey:enable() end
+        for _, hotkey in ipairs(boundByUser) do hotkey:enable() end
     end
 
     function powerWindows:_stopHotkeys()
-        for _, hotkey in ipairs(defaultHotkeys) do hotkey:delete() end
-        defaultHotkeys = {}
-        for _, hotkey in ipairs(userHotkeys) do hotkey:disable() end
+        for _, hotkey in ipairs(boundDefaults) do hotkey:delete() end
+        boundDefaults = {}
+        for _, hotkey in ipairs(boundByUser) do hotkey:disable() end
     end
 end

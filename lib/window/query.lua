@@ -6,8 +6,8 @@ return function(powerWindows, settings)
     function query.focused() return hs.window.focusedWindow() end
 
     function query.isOnScreen(window, screen)
-        local own = window:screen()
-        return own ~= nil and own:id() == screen:id()
+        local windowScreen = window:screen()
+        return windowScreen ~= nil and windowScreen:id() == screen:id()
     end
 
     function powerWindows:_screenLayout(screen)
@@ -23,12 +23,12 @@ return function(powerWindows, settings)
     end
 
     function query.info(window)
-        local app = window:application()
+        local application = window:application()
         local frame = window:frame()
         local element = axuielement.windowElement(window)
         return {
-            bundle = app and app:bundleID(),
-            app = app and app:title() or "",
+            bundle = application and application:bundleID(),
+            app = application and application:title() or "",
             title = window:title() or "", w = frame.w, h = frame.h,
             identifier = element and element:attributeValue("AXIdentifier"),
         }
@@ -37,7 +37,11 @@ return function(powerWindows, settings)
     function powerWindows:_skipped(window)
         for _, predicate in ipairs(self._skip) do
             local ok, skip = pcall(predicate, window)
-            if ok and skip then return true end
+            if not ok then
+                print("PowerWindows: skip predicate: " .. tostring(skip))
+            elseif skip then
+                return true
+            end
         end
         return false
     end

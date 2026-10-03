@@ -1,5 +1,8 @@
 local rules = {}
 
+-- Where a user's rule that raised is reported; a test replaces it.
+rules.report = print
+
 rules.SLOTS = {
     main = true, side = true, corner = true, stack = true, dialog = true,
 }
@@ -27,7 +30,10 @@ local function matches(entry, info)
     end
     if entry.title and not info.title:find(entry.title) then return false end
     if entry.notTitle and info.title:find(entry.notTitle) then return false end
-    if entry.maxTitle and #info.title > entry.maxTitle then return false end
+    if entry.maxTitle
+        and (utf8.len(info.title) or #info.title) > entry.maxTitle then
+        return false
+    end
     if entry.maxSize
         and not (info.w < entry.maxSize[1] and info.h < entry.maxSize[2]) then
         return false
@@ -73,8 +79,16 @@ end
 
 function rules.resolve(config, entries, dialogs, info, window)
     if config.rule then
-        local value = config.rule(window, info)
-        if value ~= nil then return rules.normalize(value, "rule") end
+        -- A rule that raises must not stop arrange all at this window.
+        local answered, value = pcall(function()
+            local answer = config.rule(window, info)
+            if answer ~= nil then return rules.normalize(answer, "rule") end
+        end)
+        if not answered then
+            rules.report("PowerWindows: rule: " .. tostring(value))
+        elseif value ~= nil then
+            return value
+        end
     end
     local override = config.overrides and config.overrides[info.bundle]
     if override == false then return false end

@@ -5,7 +5,8 @@
 --   maxSize            { width, height }: the window is strictly smaller
 --   maxTitle           the title is at most this many characters
 -- Beats overrides and catalog slots; loses to `rule` and to any `false`.
--- Titles assume an English macOS; the size-only lines match in any language.
+-- Titles assume an English macOS; the lines without one match in any
+-- language.
 return {
     -- Any app, by title.
     { "*", title = "^Save",   maxSize = { 800, 600 } },

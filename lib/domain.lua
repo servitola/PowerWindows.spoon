@@ -1,6 +1,7 @@
 -- The domain: what is done to windows (lib/window) and what runs on top of
--- that (lib/features). Each part adds methods to powerWindows; later ones
--- call the methods of earlier ones.
+-- that (lib/features). Each part adds methods to powerWindows and calls the
+-- others through self, so only query, which the others receive, must come
+-- first.
 local here = hs.spoons.scriptPath()
 local function load(name) return dofile(here .. name .. ".lua") end
 

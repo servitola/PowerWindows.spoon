@@ -2,12 +2,12 @@ local ACTIVATE_DELAY, CHORD_DELAY, POPUP_DELAY = 0.18, 0.08, 0.35
 local VIDEO_SLOTS = { main = "main", left = "main", corner = "corner" }
 -- hs.application:kind(): an app with a Dock icon, not an agent or a background
 -- app.
-local REGULAR_APP = 1
+local REGULAR_APPLICATION = 1
 
 local function focusFirstRunning(bundles)
     for _, bundle in ipairs(bundles) do
-        local app = hs.application.get(bundle)
-        if app then app:activate() return end
+        local application = hs.application.get(bundle)
+        if application then application:activate() return end
     end
 end
 
@@ -15,31 +15,31 @@ return function(powerWindows, catalog)
     local focusSets = {}
 
     function focusSets.looksLikeVideo(title)
-        local lower = (title or ""):lower()
+        local lowercaseTitle = (title or ""):lower()
         for _, marker in ipairs(powerWindows.config.videoTitleMarkers) do
-            if lower:find(marker, 1, true) then return true end
+            if lowercaseTitle:find(marker, 1, true) then return true end
         end
         return false
     end
 
-    local function popups(app)
+    local function popups(application)
         local list = {}
-        for _, window in ipairs(app:allWindows()) do
+        for _, window in ipairs(application:allWindows()) do
             local resolved = powerWindows:resolve(window)
             if resolved and resolved.popup then list[#list + 1] = window end
         end
         return list
     end
 
-    local function hideExceptPopups(app, videoSlot, popupBundles)
-        local popupWindows = popups(app)
+    local function hideExceptPopups(application, videoSlot, popupBundles)
+        local popupWindows = popups(application)
         if #popupWindows == 0 then
-            if popupBundles[app:bundleID()] then
-                for _, window in ipairs(app:allWindows()) do
+            if popupBundles[application:bundleID()] then
+                for _, window in ipairs(application:allWindows()) do
                     window:minimize()
                 end
             end
-            if not app:isHidden() then app:hide() end
+            if not application:isHidden() then application:hide() end
             return
         end
         local popupIds = {}
@@ -51,7 +51,7 @@ return function(powerWindows, catalog)
                 )
             end
         end
-        for _, window in ipairs(app:allWindows()) do
+        for _, window in ipairs(application:allWindows()) do
             if not popupIds[window:id()] and window:isStandard() then
                 window:minimize()
             end
@@ -60,20 +60,21 @@ return function(powerWindows, catalog)
 
     -- The PiP window appears with a delay: send the browser's chord, lay out
     -- after.
-    local function popOut(app, videoSlot, popupBundles, done)
-        local chord = catalog.pipChords[app:bundleID()]
-        local frontWindow = app:focusedWindow() or app:mainWindow()
-        if not chord or not frontWindow or #popups(app) > 0
+    local function popOut(application, videoSlot, popupBundles, done)
+        local chord = catalog.pictureInPictureChords[application:bundleID()]
+        local frontWindow = application:focusedWindow()
+            or application:mainWindow()
+        if not chord or not frontWindow or #popups(application) > 0
             or not focusSets.looksLikeVideo(frontWindow:title()) then
             return false
         end
-        local bundle = app:bundleID()
+        local bundle = application:bundleID()
         powerWindows:_after(ACTIVATE_DELAY, function()
-            app:activate()
+            application:activate()
             powerWindows:_after(CHORD_DELAY, function()
                 hs.eventtap.keyStroke(chord.mods, chord.key, 0)
                 powerWindows:_after(POPUP_DELAY, function()
-                    hideExceptPopups(app, videoSlot, popupBundles)
+                    hideExceptPopups(application, videoSlot, popupBundles)
                     done()
                 end, "focus:tidy:" .. bundle)
             end, "focus:chord:" .. bundle)
@@ -81,9 +82,9 @@ return function(powerWindows, catalog)
         return true
     end
 
-    local function restore(app)
-        if app:isHidden() then app:unhide() end
-        for _, window in ipairs(app:allWindows()) do
+    local function restore(application)
+        if application:isHidden() then application:unhide() end
+        for _, window in ipairs(application:allWindows()) do
             if window:isMinimized() then window:unminimize() end
             if not powerWindows:_skipped(window) then
                 powerWindows:placeDefault(window)
@@ -114,15 +115,24 @@ return function(powerWindows, catalog)
         local popupBundles = catalog.popupBundles()
         local function focusFirst() focusFirstRunning(set.focus or {}) end
 
-        for _, app in ipairs(hs.application.runningApplications()) do
-            if app:kind() == REGULAR_APP then
-                local bundle = app:bundleID()
+        for _, application in ipairs(hs.application.runningApplications()) do
+            if application:kind() == REGULAR_APPLICATION then
+                local bundle = application:bundleID()
                 if custom[bundle] then
-                    custom[bundle](app, powerWindows)
+                    -- One handler that raises must not leave the rest of
+                    -- the apps half arranged.
+                    local handled, problem =
+                        pcall(custom[bundle], application, powerWindows)
+                    if not handled then
+                        print("PowerWindows: focus set " .. name .. ": "
+                            .. tostring(problem))
+                    end
                 elseif keptBundles[bundle] then
-                    restore(app)
-                elseif not popOut(app, videoSlot, popupBundles, focusFirst) then
-                    hideExceptPopups(app, videoSlot, popupBundles)
+                    restore(application)
+                elseif not popOut(
+                    application, videoSlot, popupBundles, focusFirst
+                ) then
+                    hideExceptPopups(application, videoSlot, popupBundles)
                 end
             end
         end

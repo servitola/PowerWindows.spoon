@@ -50,7 +50,7 @@ return function(powerWindows, geometry, query)
 
     local function simpleMove(self, window, area)
         window = window or query.focused()
-        if not window then return end
+        if not window or window:isFullScreen() then return end
         local config, screenFrame = self:_screenLayoutOf(window)
         if screenFrame then
             self:_set(window, geometry.rect(config, area, screenFrame))
@@ -90,7 +90,7 @@ return function(powerWindows, geometry, query)
     --- Centers the window, size kept.
     function powerWindows:center(window)
         window = window or query.focused()
-        if not window then return end
+        if not window or window:isFullScreen() then return end
         local _, screenFrame = self:_screenLayoutOf(window)
         if not screenFrame then return end
         local frame = window:frame()
@@ -127,7 +127,8 @@ return function(powerWindows, geometry, query)
         -- Not isStandard: some players (Telegram's) are non-standard windows
         -- with a slot.
         for _, window in ipairs(hs.window.allWindows()) do
-            if window:isVisible() and not self:_skipped(window) then
+            if window:isVisible() and not window:isFullScreen()
+                and not self:_skipped(window) then
                 local resolved = self:resolve(window)
                 if resolved and resolved.slot == "stack" then
                     local screen = window:screen()

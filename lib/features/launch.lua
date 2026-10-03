@@ -27,13 +27,14 @@ local function watch(powerWindows, geometry, options)
 
     -- Electron recreates the window after load and the old AX object dies:
     -- re-fetch each tick.
-    local function enforce(app)
+    local function enforce(application)
         local key, endKey =
-            "launch:enforce:" .. app:pid(), "launch:enforceEnd:" .. app:pid()
+            "launch:enforce:" .. application:pid(),
+            "launch:enforceEnd:" .. application:pid()
         powerWindows:_cancel(endKey)
         powerWindows:_every(ENFORCE_INTERVAL, function()
-            if not app:isRunning() then return true end
-            local window = app:mainWindow()
+            if not application:isRunning() then return true end
+            local window = application:mainWindow()
             if not window or not window:isStandard() then return end
             local want = target(window)
             local frame = window:frame()
@@ -51,18 +52,19 @@ local function watch(powerWindows, geometry, options)
         )
     end
 
-    local function poll(app)
+    local function poll(application)
         local key, endKey =
-            "launch:poll:" .. app:pid(), "launch:pollEnd:" .. app:pid()
+            "launch:poll:" .. application:pid(),
+            "launch:pollEnd:" .. application:pid()
         powerWindows:_cancel(endKey)
         powerWindows:_every(POLL_INTERVAL, function()
-            local window = app:mainWindow()
+            local window = application:mainWindow()
             if not window or not window:isStandard() then return end
             powerWindows:_cancel(endKey)
             if not powerWindows:_skipped(window) then
                 powerWindows:placeDefault(window)
             end
-            enforce(app)
+            enforce(application)
             return true
         end, key)
         powerWindows:_after(
@@ -70,10 +72,10 @@ local function watch(powerWindows, geometry, options)
         )
     end
 
-    local watcher = hs.application.watcher.new(function(_, event, app)
+    local watcher = hs.application.watcher.new(function(_, event, application)
         if event == hs.application.watcher.launched
-            and app and bundles[app:bundleID()] then
-            poll(app)
+            and application and bundles[application:bundleID()] then
+            poll(application)
         end
     end):start()
 
@@ -84,9 +86,9 @@ local function watch(powerWindows, geometry, options)
         finderFilter:subscribe(hs.window.filter.windowCreated, function(window)
             powerWindows:_after(FINDER_SETTLE, function()
                 if not window:isStandard() then return end
-                local app = window:application()
-                if not app then return end
-                for _, other in ipairs(app:allWindows()) do
+                local application = window:application()
+                if not application then return end
+                for _, other in ipairs(application:allWindows()) do
                     if other:isStandard() and other:id() ~= window:id() then
                         return
                     end

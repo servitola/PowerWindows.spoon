@@ -2,7 +2,6 @@
 ---
 --- Every window in its place, one key.
 local powerWindows = {}
-powerWindows.__index = powerWindows
 
 powerWindows.name = "PowerWindows"
 powerWindows.version = "0.2.0"
@@ -13,7 +12,8 @@ powerWindows.license = "MIT - https://opensource.org/licenses/MIT"
 local spoonPath = hs.spoons.scriptPath()
 local function load(name) return dofile(spoonPath .. name .. ".lua") end
 
--- Three layers. The config files are yours to edit; they go in here.
+-- Three layers. The config files are the defaults: edit them, or pass your
+-- own values to configure{} and an update will not undo them.
 local core = load("lib/core")({
     settings = load("config/settings"),
     catalog = load("config/catalog"),
@@ -36,7 +36,7 @@ function powerWindows:configure(config)
         core.settings.copy(self.config), config
     )
     domain.validate(merged)
-    core.settings.merge(self.config, config)
+    self.config = merged
     return self
 end
 
@@ -102,6 +102,7 @@ function powerWindows:stop()
     self:_stopGlobe()
     self:_stopScreenWatcher()
     self:_stopLaunch()
+    self:_cancelAll()
     return self
 end
 

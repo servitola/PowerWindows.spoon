@@ -1,5 +1,5 @@
--- The core: geometry, rules and settings (lib/core, pure Lua with no
--- Hammerspoon in it) and the config tables init.lua hands over.
+-- The core: geometry, rules, settings and the catalog (lib/core, pure Lua
+-- with no Hammerspoon in it) and the config tables init.lua hands over.
 local here = hs.spoons.scriptPath() .. "core/"
 local function load(name) return dofile(here .. name .. ".lua") end
 
