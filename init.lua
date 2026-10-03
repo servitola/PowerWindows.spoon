@@ -29,8 +29,7 @@ end
 
 --- PowerWindows:configure(config) -> self
 --- Method
---- Merges `config` into the current settings: maps key by key, one level deep; lists replaced.
---- A typo or a wrong type raises, nested keys included.
+--- Merge `config` into the current settings: maps key by key, one level deep; lists replaced.
 function powerWindows:configure(config)
     local merged = core.settings.merge(core.settings.copy(self.config), config)
     domain.validate(merged)
@@ -40,7 +39,7 @@ end
 
 --- PowerWindows:setOverride(bundle, value)
 --- Method
---- Sets where `bundle` goes: a slot, `false`, a table, or `nil` to clear.
+--- Set where `bundle` goes: a slot, `false`, a table, or `nil` to clear.
 function powerWindows:setOverride(bundle, value)
     if value ~= nil then core.rules.normalize(value, "override") end
     self.config.overrides[bundle] = value
