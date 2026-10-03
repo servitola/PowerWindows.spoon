@@ -49,53 +49,83 @@ local function writeFrame(window, element, rect, correct)
     end
 end
 
+-- Chromium and Electron animate every AX write while AXEnhancedUserInterface
+-- is on; Rectangle, Amethyst, Phoenix and hs.window:setFrame lift it the same
+-- way. Restored even when a write fails: left off, it breaks VoiceOver for
+-- that app.
+local function withPlainInterface(window, body)
+    local application = window:application()
+    if not application then return end
+    local applicationElement = axuielement.applicationElement(application)
+    local enhanced = applicationElement
+        and applicationElement:attributeValue("AXEnhancedUserInterface")
+    if enhanced then
+        applicationElement:setAttributeValue("AXEnhancedUserInterface", false)
+    end
+    local written, problem = pcall(body, axuielement.windowElement(window))
+    if enhanced then
+        applicationElement:setAttributeValue("AXEnhancedUserInterface", true)
+    end
+    if not written then error(problem, 0) end
+end
+
 -- correct = false: skip the retry (animation steps, a size that is read back
 -- anyway).
 local function write(window, rect, correct)
-    local application = window:application()
-    if not application then return end
-    local app = axuielement.applicationElement(application)
-    -- Chromium and Electron animate every AX write while
-    -- AXEnhancedUserInterface is on; Rectangle, Amethyst, Phoenix and
-    -- hs.window:setFrame lift it the same way. Restored even when a write
-    -- fails: left off, it breaks VoiceOver for that app.
-    local enhanced = app and app:attributeValue("AXEnhancedUserInterface")
-    if enhanced then app:setAttributeValue("AXEnhancedUserInterface", false) end
-    local written, problem = pcall(
-        writeFrame, window, axuielement.windowElement(window), rect,
-        correct ~= false
-    )
-    if enhanced then app:setAttributeValue("AXEnhancedUserInterface", true) end
-    if not written then error(problem, 0) end
+    withPlainInterface(window, function(element)
+        writeFrame(window, element, rect, correct ~= false)
+    end)
+end
+
+local function writePosition(window, position)
+    withPlainInterface(window, function(element)
+        element:setAttributeValue("AXPosition", position)
+    end)
 end
 
 return function(powerWindows, geometry, query)
     local function moveKey(window) return "move:" .. tostring(window:id()) end
 
+    -- By window id: the rect asked for and the frame the window was left
+    -- with, when its app refused the size.
+    local refused = {}
+
     -- An app that refuses the size (its minimum is larger) hangs over the
-    -- screen edge in the right column: the last write of a move pulls it back.
-    local function settle(window, rect)
+    -- screen edge in the right column: the last write of a move pulls the
+    -- window back inside, by position only.
+    local function writeKeepingOnScreen(window, rect)
         write(window, rect)
-        local frame = window:frame()
+        local id, frame = window:id(), window:frame()
+        if id then refused[id] = nil end
         if frame.w <= rect.w + CLAMP_TOLERANCE
             and frame.h <= rect.h + CLAMP_TOLERANCE then
             return
         end
         for _, screen in ipairs(hs.screen.allScreens()) do
             if geometry.contains(screen:fullFrame(), rect) then
-                local inside = geometry.inside(frame, screen:frame())
-                return write(window, {
-                    x = inside.x, y = inside.y, w = frame.w, h = frame.h,
-                }, false)
+                writePosition(window, geometry.inside(frame, screen:frame()))
+                if id then
+                    refused[id] = { rect = rect, frame = window:frame() }
+                end
+                return
             end
         end
+    end
+
+    -- Asked again for the slot it could not shrink into, the window would
+    -- slide out over the edge and back.
+    local function restsRefused(window, rect, frame)
+        local before = refused[window:id() or false]
+        return before ~= nil
+            and geometry.near(before.rect, rect, SAME_SIZE_TOLERANCE)
+            and geometry.near(before.frame, frame, CLAMP_TOLERANCE)
     end
 
     -- Every direct write first stops a running animation, or its next step
     -- drags the window back.
     function powerWindows:_write(window, rect)
         self:_cancel(moveKey(window))
-        settle(window, rect)
+        writeKeepingOnScreen(window, rect)
     end
 
     -- Time-based, so a slow app drops steps instead of stretching the move;
@@ -106,8 +136,9 @@ return function(powerWindows, geometry, query)
         self:_cancel(key)
         local from = window:frame()
         if geometry.near(from, rect, SAME_SIZE_TOLERANCE) then return end
+        if restsRefused(window, rect, from) then return end
         local duration = self.config.animation
-        if duration <= 0 then return settle(window, rect) end
+        if duration <= 0 then return writeKeepingOnScreen(window, rect) end
         local start = hs.timer.secondsSinceEpoch()
         self:_every(ANIMATION_FRAME, function()
             local progress = math.min(
@@ -115,7 +146,7 @@ return function(powerWindows, geometry, query)
             )
             local eased = 1 - (1 - progress) ^ 3
             if progress >= 1 then
-                settle(window, rect)
+                writeKeepingOnScreen(window, rect)
                 return true
             end
             write(window, {
