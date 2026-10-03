@@ -1,10 +1,8 @@
 return function(powerWindows, settings)
     local query = {}
 
-    -- Not frontmostWindow: that is the always-on-top PiP player, not the window being worked in.
     function query.focused() return hs.window.focusedWindow() end
 
-    -- A method whose window defaults to the focused one; with no window it returns whenNone.
     function query.withWindow(body, whenNone)
         return function(self, window, ...)
             window = window or query.focused()
@@ -18,7 +16,6 @@ return function(powerWindows, settings)
         return own ~= nil and own:id() == screen:id()
     end
 
-    -- Profile chosen by the full frame (screen shape), layout on the usable frame (no menu bar, no Dock).
     function powerWindows:_screenLayout(screen)
         local full = screen:fullFrame()
         return settings.forScreen(self.config, { name = screen:name(), w = full.w, h = full.h }), screen:frame()
@@ -52,7 +49,6 @@ return function(powerWindows, settings)
         return resolved == false or (resolved.slot == "corner" and resolved.keepAspect == true)
     end, false)
 
-    -- A window that swaps and focus-next may pick.
     function powerWindows:_isCandidate(window)
         return window:isStandard() and window:isVisible() and not self:isDecoration(window)
     end

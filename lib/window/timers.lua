@@ -42,8 +42,6 @@ return function(powerWindows)
         hold(timer, key)
     end
 
-    -- callback returns true to stop repeating. An error stops it too: Hammerspoon stops a raising
-    -- doEvery on its own, and the key must not keep holding the dead timer.
     function powerWindows:_every(interval, callback, key)
         if key then self:_cancel(key) end
         local timer
@@ -70,7 +68,6 @@ return function(powerWindows)
         end)
     end
 
-    -- settle: how long the window needs after the Space animation before callback can act on it.
     function powerWindows:_leaveFullscreenThen(window, settle, callback)
         window:setFullScreen(false)
         self:_waitUntil(

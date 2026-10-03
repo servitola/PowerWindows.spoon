@@ -9,7 +9,6 @@ return function(powerWindows, geometry, query)
                 end
             end
         end
-        -- By id: every re-lay keeps the same order.
         table.sort(list, function(first, second) return first.window:id() < second.window:id() end)
         return list
     end
