@@ -5,7 +5,7 @@ local ENFORCE_INTERVAL, ENFORCE_DURATION = 0.5, 12
 -- AX window list is unsettled at windowCreated.
 local FINDER_SETTLE = 0.2
 
-return function(powerWindows, geometry, options)
+local function watch(powerWindows, geometry, options)
     local bundles = {}
     for _, bundle in ipairs(options.bundles) do bundles[bundle] = true end
 
@@ -81,4 +81,18 @@ return function(powerWindows, geometry, options)
             powerWindows:_cancelPrefix("launch:")
         end,
     }
+end
+
+return function(powerWindows, geometry)
+    function powerWindows:_startLaunch()
+        local options = self.config.experimental.placeOnLaunch
+        if options then self._launch = watch(self, geometry, options) end
+    end
+
+    function powerWindows:_stopLaunch()
+        if self._launch then
+            self._launch.stop()
+            self._launch = nil
+        end
+    end
 end

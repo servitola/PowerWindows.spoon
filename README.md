@@ -85,10 +85,12 @@ One line in `config/catalog.lua` or `config/dialogs.lua`, as a pull request. For
 No folder holds more than seven entries.
 
 ```
-init.lua       public API
-config/        settings, catalog, dialogs
-lib/core/      geometry, rules, settings (no Hammerspoon)
+init.lua       the contract: public API, config files handed to the layers
+config/        settings, catalog, dialogs: yours to edit
+lib/core/      geometry, rules, settings (pure Lua, no Hammerspoon)
 lib/window/    place, stack, actions, minimize, query, timers
 lib/features/  hotkeys, globe, focus, screens, launch
+lib/core.lua   assembles the core from the config
+lib/domain.lua assembles lib/window and lib/features on top of the core
 docs/          guide, keys, apps, layout, macos-keys, changelog
 ```
