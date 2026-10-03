@@ -1,5 +1,5 @@
 -- Placing needs only the frame back; minimize (minimize.lua) waits longer.
-local AFTER_FULLSCREEN = 0.2
+local AFTER_FULLSCREEN = 0.1
 
 return function(powerWindows, geometry, query)
     local withWindow = query.withWindow
