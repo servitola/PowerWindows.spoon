@@ -21,19 +21,9 @@ local core = load("lib/core")({
 })
 local domain = load("lib/domain")(powerWindows, core)
 
-local function release(self)
-    for _, hotkey in ipairs(self._hotkeys) do hotkey:delete() end
-    self._hotkeys = {}
-    self:_stopGlobe()
-    self:_stopScreenWatcher()
-    self:_stopLaunch()
-end
-
 function powerWindows:init()
     self.config = core.settings.copy(core.defaults)
     self._skip = {}
-    self._hotkeys = {}
-    self._userHotkeys = {}
     return self
 end
 
@@ -87,9 +77,8 @@ end
 --- Binds the default chords; starts Globe keys, screen watcher and place-on-launch when enabled. Calling again rebinds.
 function powerWindows:start()
     domain.validate(self.config)
-    release(self)
-    if self.config.hotkeys then self:_bind(self:defaultHotkeys(), self._hotkeys) end
-    for _, hotkey in ipairs(self._userHotkeys) do hotkey:enable() end
+    self:stop()
+    self:_startHotkeys()
     self:_startGlobe()
     self:_startScreenWatcher()
     self:_startLaunch()
@@ -101,8 +90,10 @@ end
 --- Deletes the default chords, disables `bindHotkeys` ones until `start()`, gives the Globe keys back,
 --- stops the screen watcher and place-on-launch.
 function powerWindows:stop()
-    release(self)
-    for _, hotkey in ipairs(self._userHotkeys) do hotkey:disable() end
+    self:_stopHotkeys()
+    self:_stopGlobe()
+    self:_stopScreenWatcher()
+    self:_stopLaunch()
     return self
 end
 

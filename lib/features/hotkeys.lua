@@ -1,4 +1,6 @@
 return function(powerWindows, actions)
+    local defaultHotkeys, userHotkeys = {}, {}
+
     --- PowerWindows:defaultHotkeys() -> table
     --- Method
     --- The `{ action = { {mods, key}, ... } }` mapping `start()` binds from `config.keys`.
@@ -20,7 +22,7 @@ return function(powerWindows, actions)
         return mapping
     end
 
-    function powerWindows:_bind(mapping, into)
+    local function bind(self, mapping, into)
         for action, chordOrChords in pairs(mapping) do
             assert(actions[action], "PowerWindows: unknown action " .. tostring(action))
             local chords = type(chordOrChords[2]) == "string" and { chordOrChords } or chordOrChords
@@ -34,7 +36,18 @@ return function(powerWindows, actions)
     --- Method
     --- Binds `{ action = {mods, key} }` or a list of chords per action; `stop()` pauses them, `start()` resumes.
     function powerWindows:bindHotkeys(mapping)
-        self:_bind(mapping, self._userHotkeys)
+        bind(self, mapping, userHotkeys)
         return self
+    end
+
+    function powerWindows:_startHotkeys()
+        if self.config.hotkeys then bind(self, self:defaultHotkeys(), defaultHotkeys) end
+        for _, hotkey in ipairs(userHotkeys) do hotkey:enable() end
+    end
+
+    function powerWindows:_stopHotkeys()
+        for _, hotkey in ipairs(defaultHotkeys) do hotkey:delete() end
+        defaultHotkeys = {}
+        for _, hotkey in ipairs(userHotkeys) do hotkey:disable() end
     end
 end
