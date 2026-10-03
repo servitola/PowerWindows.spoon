@@ -51,7 +51,8 @@ function geometry.anchor(box, width, height, anchor)
     if anchor == "center" then
         return { x = box.x + (box.w - width) / 2, y = box.y + (box.h - height) / 2, w = width, h = height }
     elseif anchor == "top" then
-        return { x = box.x + (box.w - width) / 2, y = box.y, w = width, h = height }
+        -- Wider than the box (the app's minimum size): the right edge stays, or the window leaves the screen.
+        return { x = box.x + math.min((box.w - width) / 2, box.w - width), y = box.y, w = width, h = height }
     end
     return { x = box.x, y = box.y, w = width, h = height }
 end
