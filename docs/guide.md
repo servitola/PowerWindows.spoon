@@ -4,14 +4,16 @@ You never move windows. Every window knows its place. Four keys, when you really
 
 ## The loop
 
-| Chord | First press | Second press |
-|---|---|---|
-| `⌃⌥←` | left column | left half |
-| `⌃⌥→` | right column | right half |
-| `⌃⌥↑` | whole screen, with gaps | native fullscreen |
-| `⌃⌥↓` | every window to its place | — |
+| Chord | Window goes to |
+|---|---|
+| `⌃⌥←` | left column |
+| `⌃⌥→` | right column |
+| `⌃⌥↑` | whole screen, with gaps |
+| `⌃⌥↓` | its place, and every other window to its own |
 
-Two apps side by side: `⌃⌥←` on one, `⌃⌥→` on the other, until each takes its half. Back: `⌃⌥↓`.
+Two apps side by side: `⇧⌃⌥←` on one, `⇧⌃⌥→` on the other. Back: `⌃⌥↓`.
+
+With `cycle = true` a chord pressed again gives the second option: left half, right half, native fullscreen ([options.md](options.md#press-again)).
 
 A player or a dialog keeps its place on `⌃⌥→`. From native fullscreen, `⌃⌥←` and `⌃⌥→` leave it first.
 

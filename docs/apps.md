@@ -74,7 +74,7 @@ spoon.PowerWindows:setOverride("com.example.Chat", "side") -- nil clears
 
 ## Leave alone
 
-`false` in the catalog, `overrides` or `rule`, or a skip predicate: never moved automatically. `⌃⌥↓`, focus sets and place on launch pass the window by. A chord still moves it.
+`false` in the catalog, `overrides` or `rule`, or a skip predicate: never moved automatically. `⌃⌥↓` and place on launch pass the window by; focus sets do not place it, but still hide or restore its app. A chord still moves it.
 
 ```lua
 spoon.PowerWindows:addSkipPredicate(function(window) return window:title() == "Scratch" end)
